@@ -5,12 +5,16 @@ node_modules
 .DS_Store
 .env
 
+# generated files
+public/bundle.js
+
 #webpack
 public
 
 #git
 .git/
-.gitignore
+# .gitignore
 
 # misc
 LICENSE
+

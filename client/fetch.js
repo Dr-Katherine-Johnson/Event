@@ -1,7 +1,7 @@
 // TODO automate CircleCI build and deployment to AWS
 
-const eventAPI = 'http://ec2-18-224-109-0.us-east-2.compute.amazonaws.com/event/';
-const rsvpAPI = 'http://ec2-13-58-208-149.us-east-2.compute.amazonaws.com/rsvp/';
+const eventAPI = 'http://localhost:5000/event/';
+const rsvpAPI = 'http://localhost:3001/rsvp/';
 
 // Given the address to the api endpoint and '/eventId' fetches data for that specific event
 const fetchEventDataFromAPI = (API, eventId, endpoint) => {
