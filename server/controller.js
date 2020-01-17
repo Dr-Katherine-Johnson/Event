@@ -1,3 +1,4 @@
+const faker = require('faker');
 const Events = require('../database/Event.js');
 const Orgs = require('../database/Org.js');
 
@@ -7,7 +8,7 @@ const errorBody = {
 };
 
 module.exports = {
-  getEventSummary(req, res, next) {
+  getEventAndOrSummary(req, res, next) {
     const eventData = {
       title: '',
       org_name: '',
@@ -31,6 +32,69 @@ module.exports = {
             });
         }
       });
+  },
+
+  // TODO: add tests
+  addEventAndOrSummary(req, res, next) {
+
+    const eventData = {
+      eventId: req.params.eventId,
+      title: req.body.title,
+      local_date_time: req.body.local_date_time,
+      orgId: req.body.orgId,
+      series: req.body.series // TODO: what happens if series is not provided??
+    }
+
+    Events.create(eventData)
+      .then(results => {
+        console.log(results);
+
+        res.status(200).json(results);
+      })
+      .catch(err => {
+        console.log(err);
+
+        res.status(400).send(err);
+      })
+  },
+
+  // TODO: add tests
+  updateEventAndOrSummary(req, res, next) {
+    let eventData = {
+      title: req.body.title,
+      local_date_time: req.body.local_date_time,
+      orgId: req.body.orgId,
+    }
+
+    // necessary to set fields in embedded documents in Mongo
+    // https://docs.mongodb.com/manual/reference/operator/update/set/#set-fields-in-embedded-documents
+    const dayOfWeek = { 'series.frequency.day_of_week': req.body.series.frequency.day_of_week }
+    const interval = { 'series.frequency.interval': req.body.series.frequency.interval }
+    const description = { 'series.description': req.body.series.description }
+    eventData = Object.assign({}, eventData, dayOfWeek, interval, description);
+
+    Events.findOneAndUpdate({ eventId: req.params.eventId }, eventData, { omitUndefined: true })
+      .then(results => {
+        console.log(results);
+        res.status(200).json(results);
+      })
+      .catch(err => {
+        console.log(err);
+        res.status(400).send(err);
+      })
+  },
+
+  // TODO: add tests
+  deleteEventAndOrSummary(req, res, next) {
+    Events.deleteOne({ eventId: req.params.eventId })
+      .then(results => {
+        console.log(results);
+        res.status(200).json(results);
+      })
+      .catch(err => {
+        console.log(err);
+        res.status(400).send(err);
+      })
   },
 
   getEventMembers(req, res, next) {
