@@ -1,10 +1,12 @@
 const _ = require('lodash');
 const { expect } = require('chai');
 const sinon = require('sinon');
+require('sinon-mongoose');
 const request = require('request');
 
 const server = 'http://localhost:5000';
-const MAX_NUMBER_OF_EVENTS = 100; // TODO: this will probably need to change when benchmarking and stress testing the db ...
+// TODO: this will probably need to change when benchmarking and stress testing the db ...
+const MAX_NUMBER_OF_EVENTS = 100;
 
 describe('Event API', () => {
   const randomEventId = Math.floor(Math.random() * 100);
@@ -42,52 +44,6 @@ describe('Event API', () => {
     });
   });
 
-  // TODO: finish these tests
-  xdescribe('POST /event/summary/:eventId', () => {
-    const url = `${server}/event/summary/${MAX_NUMBER_OF_EVENTS}`;
-
-    const sample = {
-      title: "A sample for our sample time",
-      org_name: "We Do Samples Here",
-      org_private: true
-    }
-
-    const options = {
-      url,
-      body: sample,
-      json: true
-    }
-
-    test('?????', (done) => {
-      // hit the endpoint with a POST
-      request.post(options, (err, res, body) => {
-        expect(res.statusCode).to.equal(200); // TODO: is this accurate??
-
-        // TODO: is this necessary?? how else could I verify that the route does what it claims to do??
-        // after that request returns, hit the same endpoint with a GET
-        request.get(url, (err, res, body) => {
-          // expect to get back that data we just inserted
-          expect(body).to.equal(JSON.stringify(sample));
-          // remove the data we just inserted from the db
-          // TODO: this is problematic because it conflates the unit tests for the POST and DELETE verbs for this route ...
-          request.delete(url, (err, res, body) => {
-            done();
-          });
-
-          // TODO: different levels / options of mocking
-          // mock the db query(ies), so the endpoints are still hit, but the endpoint code is provided fake data from the db queries // TODO: is this possible??
-          // mock the api call ... but the api is the code currently under test, so how would that help me??
-        })
-
-      })
-    });
-  });
-  xdescribe('PUT /event/summary/:eventId', () => {
-
-  });
-  xdescribe('DELETE /event/summary/:eventId', () => {
-
-  });
   describe('GET /event/:eventId', () => {
     const url = `${server}/event/${randomEventId}`;
     test('Should return the date and time as well as the summary of the event', (done) => {
@@ -137,6 +93,89 @@ describe('Event API', () => {
     });
   });
 
+  // TODO: this is integration testing ... need to mock the db interactions to unit test the API routes
+  describe('Integration tests', () => {
+    const url = `${server}/event/${MAX_NUMBER_OF_EVENTS}`;
+
+    let sample = {
+      title: 'Testing API integration',
+      local_date_time: new Date(),
+      orgId: 'o10',
+      series: {
+        description: 'Every 2nd Sunday of the month until April 2020',
+        frequency: {
+          day_of_week: 'Monday',
+          interval: 2,
+        },
+      },
+    };
+    let options = {
+      url,
+      body: sample,
+      json: true
+    }
+
+    test('GET, POST, PUT, DELETE on /event/:eventId & GET on /event/timedate/:eventId', (done) => {
+
+      // TODO: assert that the db has a certain number of documents to start
+
+      // hit the endpoint with a POST
+      request.post(options, (err, res, body) => {
+        expect(res.statusCode).to.equal(200);
+
+        sample = {
+          title: 'Testing API integration',
+          local_date_time: new Date(),
+          orgId: 'o10',
+          series: {
+            description: 'This is a different description',
+            frequency: {
+              day_of_week: 'Friday',
+              interval: 4,
+            },
+          },
+        };
+        options = {
+          url,
+          body: sample,
+          json: true
+        }
+
+        // update the document we just created
+        request.put(options, (err, res, body) => {
+          expect(res.statusCode).to.equal(200);
+
+          request.get({ url, json: true }, (err, res, body) => {
+            expect(res.statusCode).to.equal(200);
+
+            // expect to get back parts of the record we just updated
+            expect(body.title).to.equal(sample.title);
+            expect(new Date(body.local_date_time).toString()).to.equal(sample.local_date_time.toString());
+            expect(body.orgId).to.equal(sample.orgId); // TODO: confirm that changing the GET /event/summary/:eventId to include the orgId doesn't break the UI
+
+            // second GET request to a different endpoint to confirm parts of the document that the first endpoint did not return, were updated
+            request.get({ url: `${server}/event/timedate/${MAX_NUMBER_OF_EVENTS}`, json: true }, (err, res, body) => {
+              expect(res.statusCode).to.equal(200);
+
+              // expect to get back parts of the updated record we just inserted
+              expect(body.series.description).to.equal(sample.series.description);
+              expect(body.series.frequency.day_of_week).to.equal(sample.series.frequency.day_of_week);
+              expect(body.series.frequency.interval).to.equal(sample.series.frequency.interval);
+
+
+              // remove the document inserted from this test
+              request.delete(url, (err, res, body) => {
+                expect(res.statusCode).to.equal(200);
+                // TODO: assert that the db has the same number of documents it had before this test.
+                done();
+              });
+            });
+          })
+        })
+      })
+    });
+  });
+
   describe('Should throw an error', () => {
     const badEventId = 999;
     const endPoints = [`${server}/event/summary/${badEventId}`, `${server}/event/timedate/${badEventId}`, `${server}/event/org/members/${badEventId}`];
@@ -178,6 +217,17 @@ describe('Event API', () => {
   describe('when stubbed', () => {
     beforeEach(() => {
       this.get = sinon.stub(request, 'get');
+    });
+
+    // TODO: mock the db query(ies), so the endpoints are still hit, but the endpoint code is provided fake data from the db queries ... look into sinon and sinon-mongoose
+    xtest('POST /event/summary/:eventId', () => {
+
+    });
+    xtest('PUT /event/summary/:eventId', () => {
+
+    });
+    xtest('DELETE /event/summary/:eventId', () => {
+
     });
     afterEach(() => {
       request.restore();

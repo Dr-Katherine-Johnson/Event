@@ -28,13 +28,13 @@ module.exports = {
             .then((org) => {
               eventData.org_name = org.org_name;
               eventData.org_private = org.org_private;
+              eventData.orgId = event.orgId;
               res.status(200).json(eventData);
             });
         }
       });
   },
 
-  // TODO: add tests
   addEventAndOrSummary(req, res, next) {
 
     const eventData = {
@@ -58,7 +58,6 @@ module.exports = {
       })
   },
 
-  // TODO: add tests
   updateEventAndOrSummary(req, res, next) {
     let eventData = {
       title: req.body.title,
@@ -84,7 +83,6 @@ module.exports = {
       })
   },
 
-  // TODO: add tests
   deleteEventAndOrSummary(req, res, next) {
     Events.deleteOne({ eventId: req.params.eventId })
       .then(results => {
@@ -118,6 +116,7 @@ module.exports = {
           const timedate = {
             local_date_time: event.local_date_time,
             description: event.series.description ? event.series.description : '',
+            series: event.series ? event.series : ''
           };
           res.status(200).json(timedate);
         } else {
