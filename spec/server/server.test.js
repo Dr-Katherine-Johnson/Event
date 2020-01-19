@@ -216,7 +216,7 @@ describe('Event API', () => {
   // TODO: add mocks and tests for each of the routes 4 verbs
   describe('when stubbed', () => {
     beforeEach(() => {
-      this.get = sinon.stub(request, 'get');
+      this.get = sinon.stub(request, 'get'); // TODO: what is this here??
     });
 
     // TODO: mock the db query(ies), so the endpoints are still hit, but the endpoint code is provided fake data from the db queries ... look into sinon and sinon-mongoose

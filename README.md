@@ -12,10 +12,15 @@
 
 ## Table of Contents
 
-1. [Usage](#Usage)
-2. [Requirements](#requirements)
-3. [Development](#development)
-4. [Production](#production)
+- [Event](#event)
+  - [Related Projects](#related-projects)
+  - [Table of Contents](#table-of-contents)
+  - [Usage](#usage)
+  - [Requirements](#requirements)
+    - [Installing Dependencies](#installing-dependencies)
+  - [Development](#development)
+  - [Production](#production)
+  - [API](#api)
 
 ## Usage
 
@@ -55,3 +60,94 @@ For production mode this project uses node and webpack in production
 npm run build:prod
 npm start
 ```
+
+## API
+GET /event(/summary)?/:eventId
+- Returns information about an event
+
+```json
+{
+  "title": STRING,
+  "org_name": STRING,
+  "org_private": BOOLEAN,
+  "local_date_time": STRING, // (in ISO 8601 format)
+  "orgId": STRING,
+}
+```
+
+Example:
+```json
+{
+  "title": "Adaptive dedicated Graphic Interface",
+  "org_name": "Eichmann - Hoeger",
+  "org_private": true,
+  "local_date_time": "2020-04-26T17:35:14.598Z",
+  "orgId": "o0"
+}
+```
+POST /event(/summary)?/:eventId
+- Adds a new event. The body of the POST request should look as follows:
+
+```js
+{
+  title: STRING
+  local_date_time: STRING, // (in ISO 8601 format)
+  orgId: STRING
+  series: {
+    frequency: {
+      day_of_week: STRING,
+      interval: NUMBER,
+    },
+    description: STRING
+  },
+}
+```
+
+Example:
+```js
+{
+  title: "Adaptive dedicated Graphic Interface"
+  local_date_time: "2020-04-26T17:35:14.598Z",
+  orgId: "o0"
+  series: {
+    frequency: {
+      day_of_week: "Sunday",
+      interval: 2,
+    },
+    description: "Every 2nd Tuesday of the month until May 2020"
+  },
+}
+```
+
+PUT /event(/summary)?/:eventId
+- Updates (or partially updates) an event. The body of the PUT request should look as follows. To update a nested value, you must provide the nested value in the proper shape. Omitted values will not be deleted by updating other nested values.
+
+```js
+{
+  title: STRING
+  local_date_time: STRING, // (in ISO 8601 format)
+  orgId: STRING
+  series: {
+    frequency: {
+      day_of_week: STRING,
+      interval: NUMBER,
+    },
+    description: STRING
+  },
+}
+```
+
+Example:
+```js
+// title, local_date_time, orgId, series.frequency.day_of_week, and series.description will retain their values, even though we are updating interval to 1 instead of 2.
+{
+  series: {
+    frequency: {
+      interval: 1
+    }
+  }
+}
+```
+
+DELETE /event(/summary)?/:eventId
+- Removes the target event
