@@ -86,7 +86,6 @@ module.exports = {
   deleteEventAndOrSummary(req, res, next) {
     Events.deleteOne({ eventId: req.params.eventId })
       .then(results => {
-        console.log(results);
         res.status(200).json(results);
       })
       .catch(err => {

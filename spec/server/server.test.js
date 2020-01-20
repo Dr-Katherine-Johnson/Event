@@ -214,6 +214,12 @@ describe('Event API', () => {
   });
 
   // TODO: add mocks and tests for each of the routes 4 verbs
+
+  // unit tests for the API routes would be something like
+    // mocking the mongoose db queries
+    // asserting that certain mongoose queries were called with certain parameters (behavior verification instead of state verification)
+    // I could also do additional state verification if the response from the mongoose query is significantly different from what the API route sends back ...
+
   describe('when stubbed', () => {
     beforeEach(() => {
       this.get = sinon.stub(request, 'get'); // TODO: what is this here??
