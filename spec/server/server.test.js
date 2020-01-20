@@ -93,7 +93,6 @@ describe('Event API', () => {
     });
   });
 
-  // TODO: this is integration testing ... need to mock the db interactions to unit test the API routes
   describe('Integration tests', () => {
     const url = `${server}/event/${MAX_NUMBER_OF_EVENTS}`;
 
@@ -213,31 +212,5 @@ describe('Event API', () => {
     });
   });
 
-  // TODO: add mocks and tests for each of the routes 4 verbs
-
-  // unit tests for the API routes would be something like
-    // mocking the mongoose db queries
-    // asserting that certain mongoose queries were called with certain parameters (behavior verification instead of state verification)
-    // I could also do additional state verification if the response from the mongoose query is significantly different from what the API route sends back ...
-
-  describe('when stubbed', () => {
-    beforeEach(() => {
-      this.get = sinon.stub(request, 'get'); // TODO: what is this here??
-    });
-
-    // TODO: mock the db query(ies), so the endpoints are still hit, but the endpoint code is provided fake data from the db queries ... look into sinon and sinon-mongoose
-    xtest('POST /event/summary/:eventId', () => {
-
-    });
-    xtest('PUT /event/summary/:eventId', () => {
-
-    });
-    xtest('DELETE /event/summary/:eventId', () => {
-
-    });
-    afterEach(() => {
-      request.restore();
-    });
-    // test cases
-  });
+  // TODO: perhaps some tests that assert when the API routes are hit, the correct controller methods are invoked?? the integration test above seems to handle most of this, though ...
 });

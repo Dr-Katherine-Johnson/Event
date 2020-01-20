@@ -1,25 +1,25 @@
 const _ = require('lodash');
 const chai = require('chai');
-const { expect } = chai;
 const sinonChai = require('sinon-chai');
 const sinon = require('sinon');
 require('sinon-mongoose');
 const controller = require('../../server/controller.js');
 const { mockReq, mockRes } = require('sinon-express-mock');
 const Event = require('../../database/Event.js');
+const Org = require('../../database/Org.js');
 
-chai.use(sinonChai);
+chai.use(sinonChai); // TODO: change from using Sinon's assertion style
 
 // TODO: this will probably need to change when benchmarking and stress testing the db ...
 const MAX_NUMBER_OF_EVENTS = 100;
-
-const params = {
+let sampleReq = {
   params: {
-    eventId: 100
+    eventId: MAX_NUMBER_OF_EVENTS
   }
 }
 
 let eventMock;
+let orgMock;
 const returnedEvent = {
   title: 'Testing API integration',
   local_date_time: new Date(),
@@ -34,16 +34,21 @@ const returnedEvent = {
 };
 
 describe('controller', () => {
-  beforeEach(() => { eventMock = sinon.mock(Event); });
-  afterEach(() => { eventMock.restore(); })
+  beforeEach(() => {
+    eventMock = sinon.mock(Event);
+    orgMock = sinon.mock(Org);
+  });
+  afterEach(() => {
+    eventMock.restore();
+    orgMock.restore();
+  })
 
   describe('getEventTimeDate', () => {
     test('calls the mongoose findOne() method', () => {
       const mockedFindOne = eventMock.expects('findOne');
       mockedFindOne.returns(Promise.resolve(returnedEvent));
-      mockedFindOne.withExactArgs({ eventId: MAX_NUMBER_OF_EVENTS })
-
-      const req = mockReq(params);
+      mockedFindOne.withExactArgs({ eventId: MAX_NUMBER_OF_EVENTS });
+      const req = mockReq(sampleReq);
       const res = mockRes();
       controller.getEventTimeDate(req, res, null);
       mockedFindOne.verify();
@@ -60,56 +65,60 @@ describe('controller', () => {
       mockedDeleteOne.returns(Promise.resolve('a value'));
       mockedDeleteOne.withExactArgs({ eventId: MAX_NUMBER_OF_EVENTS });
 
-      const req = mockReq(params);
+      const req = mockReq(sampleReq);
       const res = mockRes();
       controller.deleteEventAndOrSummary(req, res, null)
       mockedDeleteOne.verify();
     });
   });
 
-  describe('UpdateEventAndOrSummary', () => {
-    test('calls the mongoose deleteOne method', () => {
-      const mockedDeleteOne = eventMock.expects('deleteOne');
-      mockedDeleteOne.returns(Promise.resolve('a value'));
-      mockedDeleteOne.withExactArgs({ eventId: MAX_NUMBER_OF_EVENTS });
+  describe('updateEventAndOrSummary', () => {
+    test('calls the mongoose findOneAndUpdate method', () => {
+      const mockedFindOneAndUpdate = eventMock.expects('findOneAndUpdate');
+      mockedFindOneAndUpdate.returns(Promise.resolve('a value'));
+      mockedFindOneAndUpdate.withArgs({ eventId: MAX_NUMBER_OF_EVENTS });
 
-      const req = mockReq(params);
+      const req = mockReq(sampleReq);
       const res = mockRes();
-      controller.deleteEventAndOrSummary(req, res, null)
-      mockedDeleteOne.verify();
+      controller.updateEventAndOrSummary(req, res, null)
+      mockedFindOneAndUpdate.verify();
+    });
+
+    // TODO: should probably add other tests that verify the arguments to findOneAndUpdate change depending on the req object
+  });
+
+  describe('addEventAndOrSummary', () => {
+    test('calls the mongoose create method with the correct arguments', () => {
+      const mockedCreate = eventMock.expects('create');
+      mockedCreate.returns(Promise.resolve());
+      mockedCreate.withArgs(Object.assign({}, { eventId: MAX_NUMBER_OF_EVENTS }, returnedEvent));
+      const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: returnedEvent }));
+      const res = mockRes();
+      controller.addEventAndOrSummary(req, res, null)
+      mockedCreate.verify();
     });
   });
-});
 
+  describe('getEventAndOrSummary', () => {
+    test('calls the mongoose findOne method on both the Event & Org models', () => {
+      const mockedOrgFindOne = orgMock.expects('findOne');
+      mockedOrgFindOne.returns(Promise.resolve({ org_name: "", org_private: true, orgId: 'o10'}));
+      mockedOrgFindOne.once();
 
-describe('API routes', () => {
-  const randomEventId = Math.floor(Math.random() * 100);
-  // TODO: add mocks and tests for each of the routes 4 verbs
-
-  // unit tests for the API routes would be something like
-    // mock the mongoose db queries
-    // call each method in the controller
-    // asserting that certain mongoose queries were called with certain parameters (behavior verification instead of state verification)
-    // I could also do additional state verification if the response from the mongoose query is significantly different from what the API route sends back ...
-
-  describe('when stubbed', () => {
-    beforeEach(() => {
-      this.get = sinon.stub(request, 'get'); // TODO: what is this here??
+      const mockedEventFindOne = eventMock.expects('findOne');
+      mockedEventFindOne.returns(Promise.resolve(returnedEvent));
+      mockedEventFindOne.withArgs({ eventId: MAX_NUMBER_OF_EVENTS });
+      mockedEventFindOne.once();
+      const req = mockReq(sampleReq);
+      const response = {
+        status: () => { return response },
+        json: () => {
+          mockedOrgFindOne.verify(); // this feels hacky ...
+        }
+      };
+      const res = mockRes(response);
+      controller.getEventAndOrSummary(req, res, null);
+      mockedEventFindOne.verify();
     });
-
-    // TODO: mock the db query(ies), so the endpoints are still hit, but the endpoint code is provided fake data from the db queries ... look into sinon and sinon-mongoose
-    xtest('POST /event/summary/:eventId', () => {
-
-    });
-    xtest('PUT /event/summary/:eventId', () => {
-
-    });
-    xtest('DELETE /event/summary/:eventId', () => {
-
-    });
-    afterEach(() => {
-      request.restore();
-    });
-    // test cases
   });
 });

@@ -1,6 +1,6 @@
 const faker = require('faker');
-const Events = require('../database/Event.js');
-const Orgs = require('../database/Org.js');
+const Event = require('../database/Event.js');
+const Org = require('../database/Org.js');
 
 const errorBody = {
   status: 'error',
@@ -14,7 +14,7 @@ module.exports = {
       org_name: '',
       org_private: false,
     };
-    return Events.findOne({ eventId: req.params.eventId })
+    return Event.findOne({ eventId: req.params.eventId })
       .then((event) => {
         if (event === null) {
           res.status(404).json(errorBody);
@@ -24,7 +24,7 @@ module.exports = {
           if (!/summary/.test(req.url)) {
             eventData.local_date_time = event.local_date_time;
           }
-          return Orgs.findOne({ orgId: event.orgId }, 'org_name org_private')
+          return Org.findOne({ orgId: event.orgId }, 'org_name org_private')
             .then((org) => {
               eventData.org_name = org.org_name;
               eventData.org_private = org.org_private;
@@ -32,11 +32,14 @@ module.exports = {
               res.status(200).json(eventData);
             });
         }
-      });
+      })
+      .catch(err => {
+        console.log(err);
+        res.send(err);
+      })
   },
 
   addEventAndOrSummary(req, res, next) {
-
     const eventData = {
       eventId: req.params.eventId,
       title: req.body.title,
@@ -45,10 +48,8 @@ module.exports = {
       series: req.body.series // TODO: what happens if series is not provided??
     }
 
-    Events.create(eventData)
+    Event.create(eventData)
       .then(results => {
-        console.log(results);
-
         res.status(200).json(results);
       })
       .catch(err => {
@@ -67,14 +68,21 @@ module.exports = {
 
     // necessary to set fields in embedded documents in Mongo
     // https://docs.mongodb.com/manual/reference/operator/update/set/#set-fields-in-embedded-documents
-    const dayOfWeek = { 'series.frequency.day_of_week': req.body.series.frequency.day_of_week }
-    const interval = { 'series.frequency.interval': req.body.series.frequency.interval }
-    const description = { 'series.description': req.body.series.description }
+    let dayOfWeek = {};
+    let interval = {};
+    let description = {};
+    if (req.body.series) {
+      description = { 'series.description': req.body.series.description }
+
+      if (req.body.series.frequency) {
+        dayOfWeek = { 'series.frequency.day_of_week': req.body.series.frequency.day_of_week }
+        interval = { 'series.frequency.interval': req.body.series.frequency.interval }
+      }
+    }
     eventData = Object.assign({}, eventData, dayOfWeek, interval, description);
 
-    Events.findOneAndUpdate({ eventId: req.params.eventId }, eventData, { omitUndefined: true })
+    Event.findOneAndUpdate({ eventId: req.params.eventId }, eventData, { omitUndefined: true })
       .then(results => {
-        console.log(results);
         res.status(200).json(results);
       })
       .catch(err => {
@@ -84,7 +92,7 @@ module.exports = {
   },
 
   deleteEventAndOrSummary(req, res, next) {
-    Events.deleteOne({ eventId: req.params.eventId })
+    Event.deleteOne({ eventId: req.params.eventId })
       .then(results => {
         res.status(200).json(results);
       })
@@ -95,12 +103,12 @@ module.exports = {
   },
 
   getEventMembers(req, res, next) {
-    Events.findOne({ eventId: req.params.eventId })
+    Event.findOne({ eventId: req.params.eventId })
       .then((event) => {
         if (event === null) {
           res.status(404).json(errorBody);
         } else {
-          return Orgs.findOne({ orgId: event.orgId }, 'members')
+          return Org.findOne({ orgId: event.orgId }, 'members')
             .then((org) => {
               res.status(200).json(org.members);
             });
@@ -109,7 +117,7 @@ module.exports = {
   },
 
   getEventTimeDate(req, res, next) {
-    Events.findOne({ eventId: req.params.eventId })
+    Event.findOne({ eventId: req.params.eventId })
       .then((event) => {
         if (event !== null) {
           const timedate = {
