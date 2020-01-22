@@ -63,15 +63,15 @@ npm start
 
 ## API
 GET /event/:eventId
-- Returns information about an event
+- Returns information about an event, in JSON format
 
 ```json
 {
-  "title": STRING,
-  "org_name": STRING,
-  "org_private": BOOLEAN,
-  "local_date_time": STRING, // (in ISO 8601 format)
-  "orgId": STRING,
+  "title": "STRING",
+  "org_name": "STRING",
+  "org_private": "boolean",
+  "local_date_time": "STRING", // (in ISO 8601 format)
+  "orgId": "STRING",
 }
 ```
 
@@ -86,64 +86,65 @@ Example:
 }
 ```
 POST /event/:eventId
-- Adds a new event. The body of the POST request should look as follows:
+- Adds a new event. The body of the POST request should be JSON, in the following format:
 
-```js
+```json
 {
-  title: STRING
-  local_date_time: STRING, // (in ISO 8601 format)
-  orgId: STRING
-  series: {
-    frequency: {
-      day_of_week: STRING,
-      interval: NUMBER,
+  "title": "STRING",
+  "local_date_time": "STRING", // (in ISO 8601 format)
+  "orgId": "STRING",
+  "series": {
+    "frequency": {
+      "day_of_week": "STRING",
+      "interval": "NUMBER",
     },
-    description: STRING
+    "description": "STRING"
   },
 }
 ```
 
 Example:
-```js
+```json
 {
-  title: "Adaptive dedicated Graphic Interface"
-  local_date_time: "2020-04-26T17:35:14.598Z",
-  orgId: "o0"
-  series: {
-    frequency: {
-      day_of_week: "Sunday",
-      interval: 2,
+  "title": "Adaptive dedicated Graphic Interface",
+  "local_date_time": "2020-04-26T17:35:14.598Z",
+  "orgId": "o0",
+  "series": {
+    "frequency": {
+      "day_of_week": "Sunday",
+      "interval": 2,
     },
-    description: "Every 2nd Tuesday of the month until May 2020"
+    "description": "Every 2nd Tuesday of the month until May 2020"
   },
 }
 ```
 
 PUT /event/:eventId
-- Updates (or partially updates) an event. The body of the PUT request should look as follows. To update a nested value, you must provide the nested value in the proper shape. Omitted values will not be deleted by updating other nested values.
+- Updates (or partially updates) an event. The body of the PUT request should be JSON in the following format. To update a nested value, you must provide the nested value in the proper shape. Omitted values will not be deleted by updating other nested values.
 
-```js
+```json
 {
-  title: STRING
-  local_date_time: STRING, // (in ISO 8601 format)
-  orgId: STRING
-  series: {
-    frequency: {
-      day_of_week: STRING,
-      interval: NUMBER,
+  "title": "STRING",
+  "local_date_time": "STRING", // (in ISO 8601 format)
+  "orgId": "STRING",
+  "series": {
+    "frequency": {
+      "day_of_week": "STRING",
+      "interval": "NUMBER",
     },
-    description: STRING
+    "description": "STRING",
   },
 }
 ```
 
 Example:
-```js
-// title, local_date_time, orgId, series.frequency.day_of_week, and series.description will retain their values, even though we are updating interval to 1 instead of 2.
+```json
+// title, local_date_time, orgId, series.frequency.day_of_week, & series.description
+// will all retain their values, even though we are updating interval to 1 instead of 2.
 {
-  series: {
-    frequency: {
-      interval: 1
+  "series": {
+    "frequency": {
+      "interval": 1
     }
   }
 }
