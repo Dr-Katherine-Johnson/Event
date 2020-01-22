@@ -39,7 +39,7 @@ module.exports = {
       title: req.body.title,
       local_date_time: req.body.local_date_time,
       orgId: req.body.orgId,
-      series: req.body.series // TODO: what happens if series is not provided??
+      series: req.body.series
     }
 
     Event.create(eventData)
