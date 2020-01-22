@@ -59,7 +59,7 @@ describe('controller', () => {
     // TODO: implement test
   });
 
-  describe('deleteEventAndOrSummary', () => {
+  describe('deleteEvent', () => {
     test('calls the mongoose deleteOne method', () => {
       const mockedDeleteOne = eventMock.expects('deleteOne');
       mockedDeleteOne.returns(Promise.resolve('a value'));
@@ -67,12 +67,12 @@ describe('controller', () => {
 
       const req = mockReq(sampleReq);
       const res = mockRes();
-      controller.deleteEventAndOrSummary(req, res, null)
+      controller.deleteEvent(req, res, null)
       mockedDeleteOne.verify();
     });
   });
 
-  describe('updateEventAndOrSummary', () => {
+  describe('updateEvent', () => {
     test('calls the mongoose findOneAndUpdate method', () => {
       const mockedFindOneAndUpdate = eventMock.expects('findOneAndUpdate');
       mockedFindOneAndUpdate.returns(Promise.resolve('a value'));
@@ -80,26 +80,26 @@ describe('controller', () => {
 
       const req = mockReq(sampleReq);
       const res = mockRes();
-      controller.updateEventAndOrSummary(req, res, null)
+      controller.updateEvent(req, res, null)
       mockedFindOneAndUpdate.verify();
     });
 
     // TODO: should probably add other tests that verify the arguments to findOneAndUpdate change depending on the req object
   });
 
-  describe('addEventAndOrSummary', () => {
+  describe('addEvent', () => {
     test('calls the mongoose create method with the correct arguments', () => {
       const mockedCreate = eventMock.expects('create');
       mockedCreate.returns(Promise.resolve());
       mockedCreate.withArgs(Object.assign({}, { eventId: MAX_NUMBER_OF_EVENTS }, returnedEvent));
       const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: returnedEvent }));
       const res = mockRes();
-      controller.addEventAndOrSummary(req, res, null)
+      controller.addEvent(req, res, null)
       mockedCreate.verify();
     });
   });
 
-  describe('getEventAndOrSummary', () => {
+  describe('getEvent', () => {
     test('calls the mongoose findOne method on both the Event & Org models', () => {
       const mockedOrgFindOne = orgMock.expects('findOne');
       mockedOrgFindOne.returns(Promise.resolve({ org_name: "", org_private: true, orgId: 'o10'}));
@@ -117,7 +117,7 @@ describe('controller', () => {
         }
       };
       const res = mockRes(response);
-      controller.getEventAndOrSummary(req, res, null);
+      controller.getEvent(req, res, null);
       mockedEventFindOne.verify();
     });
   });

@@ -10,9 +10,9 @@ const MAX_NUMBER_OF_EVENTS = 100;
 
 describe('Event API', () => {
   const randomEventId = Math.floor(Math.random() * 100);
-  describe('GET /event/summary/:eventId', () => {
+  describe('GET /event/:eventId', () => {
     const eventDataKeys = ['title', 'org_name', 'org_private'];
-    const url = `${server}/event/summary/${randomEventId}`;
+    const url = `${server}/event/${randomEventId}`;
     test('Should return event data necessary to render the Event module: event title, name of the organization hosting it, and whether that organization is public or private', (done) => {
       request.get(url, (err, res, body) => {
         // make sure the resonse contains a status code and that it's 200 since it's successful
@@ -46,7 +46,7 @@ describe('Event API', () => {
 
   describe('GET /event/:eventId', () => {
     const url = `${server}/event/${randomEventId}`;
-    test('Should return the date and time as well as the summary of the event', (done) => {
+    test('Should return the date_time, title, name, and private status of the event', (done) => {
       const eventDataKeys = ['title', 'local_date_time', 'org_name', 'org_private'];
       request.get(url, (err, res, body) => {
         // make sure the resonse contains a status code and that it's 200 since it's successful
@@ -150,7 +150,7 @@ describe('Event API', () => {
             // expect to get back parts of the record we just updated
             expect(body.title).to.equal(sample.title);
             expect(new Date(body.local_date_time).toString()).to.equal(sample.local_date_time.toString());
-            expect(body.orgId).to.equal(sample.orgId); // TODO: confirm that changing the GET /event/summary/:eventId to include the orgId doesn't break the UI
+            expect(body.orgId).to.equal(sample.orgId); // TODO: confirm that changing the GET /event/:eventId to include the orgId doesn't break the UI
 
             // second GET request to a different endpoint to confirm parts of the document that the first endpoint did not return, were updated
             request.get({ url: `${server}/event/timedate/${MAX_NUMBER_OF_EVENTS}`, json: true }, (err, res, body) => {
@@ -177,9 +177,9 @@ describe('Event API', () => {
 
   describe('Should throw an error', () => {
     const badEventId = 999;
-    const endPoints = [`${server}/event/summary/${badEventId}`, `${server}/event/timedate/${badEventId}`, `${server}/event/org/members/${badEventId}`];
+    const endPoints = [`${server}/event/${badEventId}`, `${server}/event/timedate/${badEventId}`, `${server}/event/org/members/${badEventId}`];
     describe('if the event doesn\'t exist', () => {
-      test('on the Summary or Event endpoint', (done) => {
+      test('on the Event endpoint', (done) => {
         request.get(endPoints[0], (err, res, body) => {
           expect(res.statusCode).to.equal(404);
           expect(res.headers['content-type']).to.contain('application/json');

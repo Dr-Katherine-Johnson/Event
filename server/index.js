@@ -14,10 +14,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, '../public')));
 
-app.get('/event(/summary)?/:eventId', controller.getEventAndOrSummary);
-app.post('/event(/summary)?/:eventId', controller.addEventAndOrSummary);
-app.put('/event(/summary)?/:eventId', controller.updateEventAndOrSummary);
-app.delete('/event(/summary)?/:eventId', controller.deleteEventAndOrSummary);
+app.get('/event/:eventId', controller.getEvent);
+app.post('/event/:eventId', controller.addEvent);
+app.put('/event/:eventId', controller.updateEvent);
+app.delete('/event/:eventId', controller.deleteEvent);
 
 app.get('/event/org/members/:eventId', controller.getEventMembers);
 app.get('/event/timedate/:eventId', controller.getEventTimeDate);

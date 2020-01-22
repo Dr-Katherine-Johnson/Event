@@ -62,7 +62,7 @@ npm start
 ```
 
 ## API
-GET /event(/summary)?/:eventId
+GET /event/:eventId
 - Returns information about an event
 
 ```json
@@ -85,7 +85,7 @@ Example:
   "orgId": "o0"
 }
 ```
-POST /event(/summary)?/:eventId
+POST /event/:eventId
 - Adds a new event. The body of the POST request should look as follows:
 
 ```js
@@ -119,7 +119,7 @@ Example:
 }
 ```
 
-PUT /event(/summary)?/:eventId
+PUT /event/:eventId
 - Updates (or partially updates) an event. The body of the PUT request should look as follows. To update a nested value, you must provide the nested value in the proper shape. Omitted values will not be deleted by updating other nested values.
 
 ```js
@@ -149,5 +149,5 @@ Example:
 }
 ```
 
-DELETE /event(/summary)?/:eventId
+DELETE /event/:eventId
 - Removes the target event

@@ -1,4 +1,3 @@
-const faker = require('faker');
 const Event = require('../database/Event.js');
 const Org = require('../database/Org.js');
 
@@ -8,10 +7,8 @@ const errorBody = {
 };
 
 module.exports = {
-  getEventAndOrSummary(req, res, next) {
+  getEvent(req, res, next) {
     const eventData = {
-      title: '',
-      org_name: '',
       org_private: false,
     };
     return Event.findOne({ eventId: req.params.eventId })
@@ -20,10 +17,7 @@ module.exports = {
           res.status(404).json(errorBody);
         } else {
           eventData.title = event.title;
-          // if the request is not for summary add date and time
-          if (!/summary/.test(req.url)) {
-            eventData.local_date_time = event.local_date_time;
-          }
+          eventData.local_date_time = event.local_date_time;
           return Org.findOne({ orgId: event.orgId }, 'org_name org_private')
             .then((org) => {
               eventData.org_name = org.org_name;
@@ -39,7 +33,7 @@ module.exports = {
       })
   },
 
-  addEventAndOrSummary(req, res, next) {
+  addEvent(req, res, next) {
     const eventData = {
       eventId: req.params.eventId,
       title: req.body.title,
@@ -59,7 +53,7 @@ module.exports = {
       })
   },
 
-  updateEventAndOrSummary(req, res, next) {
+  updateEvent(req, res, next) {
     let eventData = {
       title: req.body.title,
       local_date_time: req.body.local_date_time,
@@ -91,7 +85,7 @@ module.exports = {
       })
   },
 
-  deleteEventAndOrSummary(req, res, next) {
+  deleteEvent(req, res, next) {
     Event.deleteOne({ eventId: req.params.eventId })
       .then(results => {
         res.status(200).json(results);
