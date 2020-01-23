@@ -78,7 +78,7 @@ describe('controller', () => {
       mockedFindOne.verify();
     });
 
-    test.only('calls res.json with correct error body if the database does not have an event with that eventId', () => {
+    test('calls res.json with correct error body if the database does not have an event with that eventId', () => {
       const mockedFindOne = eventMock.expects('findOne');
       mockedFindOne.returns(Promise.resolve(null));
       mockedFindOne.withExactArgs({ eventId: 101 });
@@ -141,12 +141,12 @@ describe('controller', () => {
       mockedFindOneAndUpdate.verify();
     });
 
-    test('', () => {
+    test('sends a 500 error back to the client when there\'s a db error', () => {
       mockedFindOneAndUpdate.returns(Promise.reject());
       const req = mockReq(sampleReq);
       const res = mockRes();
-      statusSpy = sinon.spy(res.status);
-      sendSpy = sinon.spy(res.send);
+      const statusSpy = sinon.spy(res.status);
+      const sendSpy = sinon.spy(res.send);
       controller.updateEvent(req, res, null);
       statusSpy.calledOnceWithExactly(500)
       sendSpy.calledOnceWithExactly();
@@ -169,14 +169,21 @@ describe('controller', () => {
     });
   });
 
-  // TODO: add at least one non-happy-path test for each route
   describe('getEvent', () => {
+    let mockedOrgFindOne = null;
+    let mockedEventFindOne = null;
+    beforeEach(() => {
+      mockedOrgFindOne = orgMock.expects('findOne');
+      mockedEventFindOne = eventMock.expects('findOne');
+    });
+    afterEach(() => {
+      mockedOrgFindOne = null;
+      mockedEventFindOne = null;
+    })
+
     test('calls the mongoose findOne method on both the Event & Org models', () => {
-      const mockedOrgFindOne = orgMock.expects('findOne');
       mockedOrgFindOne.returns(Promise.resolve({ org_name: "", org_private: true, orgId: 'o10'}));
       mockedOrgFindOne.once();
-
-      const mockedEventFindOne = eventMock.expects('findOne');
       mockedEventFindOne.returns(Promise.resolve(returnedEvent));
       mockedEventFindOne.withArgs({ eventId: MAX_NUMBER_OF_EVENTS });
       mockedEventFindOne.once();
@@ -189,6 +196,18 @@ describe('controller', () => {
       };
       const res = mockRes(response);
       controller.getEvent(req, res, null);
+      mockedEventFindOne.verify();
+    });
+
+    test('sends a 500 error back to the client when there\'s a db error', () => {
+      mockedEventFindOne.returns(Promise.reject());
+      const req = mockReq(sampleReq);
+      const res = mockRes();
+      const statusSpy = sinon.spy(res.status);
+      const sendSpy = sinon.spy(res.send);
+      controller.getEvent(req, res, null);
+      statusSpy.calledOnceWithExactly(500);
+      sendSpy.calledOnceWithExactly();
       mockedEventFindOne.verify();
     });
   });
