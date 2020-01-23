@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const chai = require('chai');
-const sinonChai = require('sinon-chai');
 const sinon = require('sinon');
 require('sinon-mongoose');
 const controller = require('../../server/controller.js');
@@ -8,12 +7,10 @@ const { mockReq, mockRes } = require('sinon-express-mock');
 const Event = require('../../database/Event.js');
 const Org = require('../../database/Org.js');
 
-chai.use(sinonChai); // TODO: change from using Sinon's assertion style
 const expect = chai.expect;
 
 // TODO: refactor to make this test suite DRYer
-
-// TODO: this will probably need to change when benchmarking and stress testing the db ...
+// TODO: this will need to change when benchmarking and stress testing the db
 const MAX_NUMBER_OF_EVENTS = 100;
 let sampleReq = {
   params: {
@@ -28,8 +25,8 @@ const errorBody = {
 
 let eventMock;
 let orgMock;
-const returnedEvent = {
-  title: 'Testing API integration',
+const sampleEvent = {
+  title: 'Controller unit tests',
   local_date_time: new Date(),
   orgId: 'o10',
   series: {
@@ -72,7 +69,7 @@ describe('controller', () => {
   describe('getEventTimeDate', () => {
     test('calls the mongoose findOne() method', () => {
       const mockedFindOne = eventMock.expects('findOne');
-      mockedFindOne.returns(Promise.resolve(returnedEvent));
+      mockedFindOne.returns(Promise.resolve(sampleEvent));
       mockedFindOne.withExactArgs({ eventId: MAX_NUMBER_OF_EVENTS });
       const req = mockReq(sampleReq);
       const res = mockRes();
@@ -165,8 +162,8 @@ describe('controller', () => {
 
     test('calls the mongoose create method with the correct arguments', () => {
       mockedCreate.returns(Promise.resolve());
-      mockedCreate.withArgs(Object.assign({}, { eventId: MAX_NUMBER_OF_EVENTS }, returnedEvent));
-      const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: returnedEvent }));
+      mockedCreate.withArgs(Object.assign({}, { eventId: MAX_NUMBER_OF_EVENTS }, sampleEvent));
+      const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: sampleEvent }));
       const res = mockRes();
       controller.addEvent(req, res, null)
       mockedCreate.verify();
@@ -200,7 +197,7 @@ describe('controller', () => {
     test('calls the mongoose findOne method on both the Event & Org models', () => {
       mockedOrgFindOne.returns(Promise.resolve({ org_name: "", org_private: true, orgId: 'o10'}));
       mockedOrgFindOne.once();
-      mockedEventFindOne.returns(Promise.resolve(returnedEvent));
+      mockedEventFindOne.returns(Promise.resolve(sampleEvent));
       mockedEventFindOne.withArgs({ eventId: MAX_NUMBER_OF_EVENTS });
       mockedEventFindOne.once();
       const req = mockReq(sampleReq);

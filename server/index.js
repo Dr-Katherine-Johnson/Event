@@ -24,6 +24,4 @@ app.delete('/event/:eventId', controller.deleteEvent);
 app.get('/event/org/members/:eventId', controller.getEventMembers);
 app.get('/event/timedate/:eventId', controller.getEventTimeDate);
 
-app.listen(PORT, () => {
-  console.log(`Event module listening on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Event module listening on port ${PORT}`));
