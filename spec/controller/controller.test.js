@@ -11,6 +11,8 @@ const Org = require('../../database/Org.js');
 chai.use(sinonChai); // TODO: change from using Sinon's assertion style
 const expect = chai.expect;
 
+// TODO: refactor to make this test suite DRYer
+
 // TODO: this will probably need to change when benchmarking and stress testing the db ...
 const MAX_NUMBER_OF_EVENTS = 100;
 let sampleReq = {
@@ -156,16 +158,30 @@ describe('controller', () => {
     // TODO: should probably add other tests that verify the arguments to findOneAndUpdate change depending on the req object
   });
 
-  // TODO: add at least one non-happy-path test for each route
   describe('addEvent', () => {
+    let mockedCreate = null;
+    beforeEach(() => { mockedCreate = eventMock.expects('create'); });
+    afterEach(() => { mockedCreate = null; });
+
     test('calls the mongoose create method with the correct arguments', () => {
-      const mockedCreate = eventMock.expects('create');
       mockedCreate.returns(Promise.resolve());
       mockedCreate.withArgs(Object.assign({}, { eventId: MAX_NUMBER_OF_EVENTS }, returnedEvent));
       const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: returnedEvent }));
       const res = mockRes();
       controller.addEvent(req, res, null)
       mockedCreate.verify();
+    });
+
+    test('informs the client there was an error if the db query rejects', () => {
+      mockedCreate.returns(Promise.reject());
+      const req = mockReq();
+      const res = mockRes();
+
+      const statusSpy = sinon.spy(res.status);
+      const sendSpy = sinon.spy(res.send);
+      controller.addEvent(req, res, null);
+      statusSpy.calledOnceWithExactly(400);
+      sendSpy.calledOnceWithExactly();
     });
   });
 
