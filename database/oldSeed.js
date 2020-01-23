@@ -18,7 +18,13 @@ const memberIds = (max) => {
 };
 // Each organization has between 1 and 4 founders and up to 50 members
 let orgMembers = () => {
-  return { founders: memberIds(4), group_members: memberIds(50) };
+  const founders = memberIds(4);
+  const group_members = memberIds(50);
+  const members = {
+    founders,
+    group_members,
+  };
+  return members;
 };
 // some, but not all events might repeat
 let eventSeries = () => {
@@ -28,8 +34,9 @@ let eventSeries = () => {
     day_of_week: faker.date.weekday(),
     interval: faker.random.number(2),
   };
+  const description = `Every ${ordinals[frequency.interval]} ${frequency.day_of_week} of the month until May 2020`;
   const newSeries = {
-    description: `Every ${ordinals[frequency.interval]} ${frequency.day_of_week} of the month until May 2020`,
+    description,
     frequency,
   };
   return repeat ? newSeries : null;
@@ -51,16 +58,21 @@ const events = [];
 //      },
 //   }
 
-const NUMBER_OF_EVENTS = 100000;
 let generateEvents = () => {
-  for (let i = 0; i < NUMBER_OF_EVENTS; i += 1) {
-    events.push({
-      eventId: i,
-      title: faker.company.catchPhrase(),
-      local_date_time: faker.date.between('2019-10-01', '2020-4-30'),
-      orgId: `o${faker.random.number(19)}`,
-      series: eventSeries(),
-    });
+  for (let i = 0; i < 100; i += 1) {
+    const eventId = i;
+    const title = faker.company.catchPhrase();
+    const local_date_time = faker.date.between('2019-10-01', '2020-4-30');
+    const orgId = `o${faker.random.number(19)}`;
+    const series = eventSeries();
+    const newEvent = {
+      eventId,
+      title,
+      local_date_time,
+      orgId,
+      series,
+    };
+    events.push(newEvent);
   }
   return events;
 };
@@ -82,12 +94,17 @@ const organizations = [];
 // With 20 events distributed evenly that is an average of 5 events per org
 let generateOrgs = () => {
   for (let i = 0; i < 20; i += 1) {
-    organizations.push({
-      orgId: `o${i}`,
-      org_name: faker.company.companyName(),
-      org_private: faker.random.boolean(),
-      members: orgMembers(),
-    });
+    const orgId = `o${i}`;
+    const org_name = faker.company.companyName();
+    const org_private = faker.random.boolean();
+    const members = orgMembers();
+    const newOrg = {
+      orgId,
+      org_name,
+      org_private,
+      members,
+    };
+    organizations.push(newOrg);
   }
 };
 
@@ -98,19 +115,11 @@ module.exports.organizations = organizations;
 module.exports.events = events;
 
 const insertSampleEventsAndOrgs = () => {
-  console.time('org');
   Org.create(organizations)
     .then((results) => {
-      console.timeEnd('org');
-      console.log('orgs seeded');
-      console.time('event');
       return Event.create(events);
     })
     .then((results) => {
-      console.log('NUMBER_OF_EVENTS: ', NUMBER_OF_EVENTS);
-      console.timeEnd('event');
-      console.log('events seeded');
-      console.log('finished seeding database!');
       db.close();
     });
 };
