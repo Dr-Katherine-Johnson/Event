@@ -111,7 +111,6 @@ module.exports = {
   },
 
   getEventTimeDate(req, res, next) {
-    console.log('timedate');
     Event.findOne({ eventId: req.params.eventId })
       .then((event) => {
         if (event !== null) {

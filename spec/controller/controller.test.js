@@ -19,6 +19,11 @@ let sampleReq = {
   }
 }
 
+const errorBody = {
+  status: 'error',
+  message: 'That event does not exist',
+};
+
 let eventMock;
 let orgMock;
 const returnedEvent = {
@@ -72,12 +77,26 @@ describe('controller', () => {
       controller.getEventTimeDate(req, res, null);
       mockedFindOne.verify();
     });
+
+    test.only('calls res.json with correct error body if the database does not have an event with that eventId', () => {
+      const mockedFindOne = eventMock.expects('findOne');
+      mockedFindOne.returns(Promise.resolve(null));
+      mockedFindOne.withExactArgs({ eventId: 101 });
+      const req = mockReq({ params: { eventId: 101 }});
+      const res = mockRes();
+      const jsonSpy = sinon.spy(res.json);
+      controller.getEventTimeDate(req, res, null);
+      jsonSpy.calledOnceWithExactly(errorBody);
+      mockedFindOne.verify();
+    });
   });
 
+  // TODO: add at least one non-happy-path test for each route
   describe('getEventMembers', () => {
     // TODO: implement test
   });
 
+  // TODO: add at least one non-happy-path test for each route
   describe('deleteEvent', () => {
     test('calls the mongoose deleteOne method', () => {
       const mockedDeleteOne = eventMock.expects('deleteOne');
@@ -91,6 +110,7 @@ describe('controller', () => {
     });
   });
 
+  // TODO: add at least one non-happy-path test for each route
   describe('updateEvent', () => {
     test('calls the mongoose findOneAndUpdate method', () => {
       const mockedFindOneAndUpdate = eventMock.expects('findOneAndUpdate');
@@ -106,6 +126,7 @@ describe('controller', () => {
     // TODO: should probably add other tests that verify the arguments to findOneAndUpdate change depending on the req object
   });
 
+  // TODO: add at least one non-happy-path test for each route
   describe('addEvent', () => {
     test('calls the mongoose create method with the correct arguments', () => {
       const mockedCreate = eventMock.expects('create');
@@ -118,6 +139,7 @@ describe('controller', () => {
     });
   });
 
+  // TODO: add at least one non-happy-path test for each route
   describe('getEvent', () => {
     test('calls the mongoose findOne method on both the Event & Org models', () => {
       const mockedOrgFindOne = orgMock.expects('findOne');
