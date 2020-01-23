@@ -3,11 +3,10 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-const Orgs = require('../database/Org.js');
-const Events = require('../database/Event.js');
-
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const controller = require('./controller.js');
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -15,62 +14,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, '../public')));
 
-const errorBody = {
-  status: 'error',
-  message: 'That event does not exist',
-};
+app.all('/event(/timedate)?(/org/members)?/:eventId', controller.checkEventId);
 
-app.get('/event(/summary)?/:eventId', (req, res) => {
-  const eventData = {
-    title: '',
-    org_name: '',
-    org_private: false,
-  };
-  return Events.findOne({ eventId: req.params.eventId })
-    .then((event) => {
-      if (event === null) {
-        res.status(404).json(errorBody);
-      } else {
-        eventData.title = event.title;
-        // if the request is not for summary add date and time
-        if (!/summary/.test(req.url)) {
-          eventData.local_date_time = event.local_date_time;
-        }
-        return Orgs.findOne({ orgId: event.orgId }, 'org_name org_private')
-          .then((org) => {
-            eventData.org_name = org.org_name;
-            eventData.org_private = org.org_private;
-            res.status(200).json(eventData);
-          });
-      }
-    });
-});
+app.get('/event/:eventId', controller.getEvent);
+app.post('/event/:eventId', controller.addEvent);
+app.put('/event/:eventId', controller.updateEvent);
+app.delete('/event/:eventId', controller.deleteEvent);
 
-app.get('/event/org/members/:eventId', (req, res) => Events.findOne({ eventId: req.params.eventId })
-  .then((event) => {
-    if (event === null) {
-      res.status(404).json(errorBody);
-    } else {
-      return Orgs.findOne({ orgId: event.orgId }, 'members')
-        .then((org) => {
-          res.status(200).json(org.members);
-        });
-    }
-  }));
+app.get('/event/org/members/:eventId', controller.getEventMembers);
+app.get('/event/timedate/:eventId', controller.getEventTimeDate);
 
-app.get('/event/timedate/:eventId', (req, res) => Events.findOne({ eventId: req.params.eventId })
-  .then((event) => {
-    if (event !== null) {
-      const timedate = {
-        local_date_time: event.local_date_time,
-        description: event.series.description ? event.series.description : '',
-      };
-      res.status(200).json(timedate);
-    } else {
-      res.status(404).json(errorBody);
-    }
-  }));
-
-app.listen(PORT, () => {
-  console.log(`Event module listening on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Event module listening on port ${PORT}`));

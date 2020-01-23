@@ -1,15 +1,18 @@
 const _ = require('lodash');
 const { expect } = require('chai');
 const sinon = require('sinon');
+require('sinon-mongoose');
 const request = require('request');
 
 const server = 'http://localhost:5000';
+// TODO: this will probably need to change when benchmarking and stress testing the db ...
+const MAX_NUMBER_OF_EVENTS = 100;
 
 describe('Event API', () => {
   const randomEventId = Math.floor(Math.random() * 100);
-  describe('GET /event/summary/:eventId', () => {
+  describe('GET /event/:eventId', () => {
     const eventDataKeys = ['title', 'org_name', 'org_private'];
-    const url = `${server}/event/summary/${randomEventId}`;
+    const url = `${server}/event/${randomEventId}`;
     test('Should return event data necessary to render the Event module: event title, name of the organization hosting it, and whether that organization is public or private', (done) => {
       request.get(url, (err, res, body) => {
         // make sure the resonse contains a status code and that it's 200 since it's successful
@@ -40,9 +43,10 @@ describe('Event API', () => {
       });
     });
   });
+
   describe('GET /event/:eventId', () => {
     const url = `${server}/event/${randomEventId}`;
-    test('Should return the date and time as well as the summary of the event', (done) => {
+    test('Should return the date_time, title, name, and private status of the event', (done) => {
       const eventDataKeys = ['title', 'local_date_time', 'org_name', 'org_private'];
       request.get(url, (err, res, body) => {
         // make sure the resonse contains a status code and that it's 200 since it's successful
@@ -63,6 +67,7 @@ describe('Event API', () => {
       });
     });
   });
+
   describe('GET /event/org/members/:eventId', () => {
     const url = `${server}/event/org/members/${randomEventId}`;
     test('Should return the organization members and founders', (done) => {
@@ -87,11 +92,94 @@ describe('Event API', () => {
       });
     });
   });
+
+  describe('Integration tests', () => {
+    const url = `${server}/event/${MAX_NUMBER_OF_EVENTS}`;
+
+    let sample = {
+      title: 'Testing API integration',
+      local_date_time: new Date(),
+      orgId: 'o10',
+      series: {
+        description: 'Every 2nd Sunday of the month until April 2020',
+        frequency: {
+          day_of_week: 'Monday',
+          interval: 2,
+        },
+      },
+    };
+    let options = {
+      url,
+      body: sample,
+      json: true
+    }
+
+    test('GET, POST, PUT, DELETE on /event/:eventId & GET on /event/timedate/:eventId', (done) => {
+
+      // TODO: assert that the db has a certain number of documents to start
+
+      // hit the endpoint with a POST
+      request.post(options, (err, res, body) => {
+        expect(res.statusCode).to.equal(200);
+
+        sample = {
+          title: 'Testing API integration',
+          local_date_time: new Date(),
+          orgId: 'o10',
+          series: {
+            description: 'This is a different description',
+            frequency: {
+              day_of_week: 'Friday',
+              interval: 4,
+            },
+          },
+        };
+        options = {
+          url,
+          body: sample,
+          json: true
+        }
+
+        // update the document we just created
+        request.put(options, (err, res, body) => {
+          expect(res.statusCode).to.equal(200);
+
+          request.get({ url, json: true }, (err, res, body) => {
+            expect(res.statusCode).to.equal(200);
+
+            // expect to get back parts of the record we just updated
+            expect(body.title).to.equal(sample.title);
+            expect(new Date(body.local_date_time).toString()).to.equal(sample.local_date_time.toString());
+            expect(body.orgId).to.equal(sample.orgId); // TODO: confirm that changing the GET /event/:eventId to include the orgId doesn't break the UI
+
+            // second GET request to a different endpoint to confirm parts of the document that the first endpoint did not return, were updated
+            request.get({ url: `${server}/event/timedate/${MAX_NUMBER_OF_EVENTS}`, json: true }, (err, res, body) => {
+              expect(res.statusCode).to.equal(200);
+
+              // expect to get back parts of the updated record we just inserted
+              expect(body.series.description).to.equal(sample.series.description);
+              expect(body.series.frequency.day_of_week).to.equal(sample.series.frequency.day_of_week);
+              expect(body.series.frequency.interval).to.equal(sample.series.frequency.interval);
+
+
+              // remove the document inserted from this test
+              request.delete(url, (err, res, body) => {
+                expect(res.statusCode).to.equal(200);
+                // TODO: assert that the db has the same number of documents it had before this test.
+                done();
+              });
+            });
+          })
+        })
+      })
+    });
+  });
+
   describe('Should throw an error', () => {
     const badEventId = 999;
-    const endPoints = [`${server}/event/summary/${badEventId}`, `${server}/event/timedate/${badEventId}`, `${server}/event/org/members/${badEventId}`];
+    const endPoints = [`${server}/event/${badEventId}`, `${server}/event/timedate/${badEventId}`, `${server}/event/org/members/${badEventId}`];
     describe('if the event doesn\'t exist', () => {
-      test('on the Summary or Event endpoint', (done) => {
+      test('on the Event endpoint', (done) => {
         request.get(endPoints[0], (err, res, body) => {
           expect(res.statusCode).to.equal(404);
           expect(res.headers['content-type']).to.contain('application/json');
@@ -124,13 +212,5 @@ describe('Event API', () => {
     });
   });
 
-  describe('when stubbed', () => {
-    beforeEach(() => {
-      this.get = sinon.stub(request, 'get');
-    });
-    afterEach(() => {
-      request.restore();
-    });
-    // test cases
-  });
+  // TODO: perhaps some tests that assert when the API routes are hit, the correct controller methods are invoked?? the integration test above seems to handle most of this, though ...
 });

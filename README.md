@@ -12,10 +12,15 @@
 
 ## Table of Contents
 
-1. [Usage](#Usage)
-2. [Requirements](#requirements)
-3. [Development](#development)
-4. [Production](#production)
+- [Event](#event)
+  - [Related Projects](#related-projects)
+  - [Table of Contents](#table-of-contents)
+  - [Usage](#usage)
+  - [Requirements](#requirements)
+    - [Installing Dependencies](#installing-dependencies)
+  - [Development](#development)
+  - [Production](#production)
+  - [API](#api)
 
 ## Usage
 
@@ -55,3 +60,96 @@ For production mode this project uses node and webpack in production
 npm run build:prod
 npm start
 ```
+
+## API
+GET /event/:eventId
+- Returns information about an event, in JSON format
+
+```json
+{
+  "title": "STRING",
+  "org_name": "STRING",
+  "org_private": "boolean",
+  "local_date_time": "STRING", // (in ISO 8601 format)
+  "orgId": "STRING",
+}
+```
+
+Example:
+```json
+{
+  "title": "Adaptive dedicated Graphic Interface",
+  "org_name": "Eichmann - Hoeger",
+  "org_private": true,
+  "local_date_time": "2020-04-26T17:35:14.598Z",
+  "orgId": "o0"
+}
+```
+POST /event/:eventId
+- Adds a new event. The body of the POST request should be JSON, in the following format:
+
+```json
+{
+  "title": "STRING",
+  "local_date_time": "STRING", // (in ISO 8601 format)
+  "orgId": "STRING",
+  // optional, defaults to null
+  "series": {
+    "frequency": {
+      "day_of_week": "STRING",
+      "interval": "NUMBER",
+    },
+    "description": "STRING"
+  },
+}
+```
+
+Example:
+```json
+{
+  "title": "Adaptive dedicated Graphic Interface",
+  "local_date_time": "2020-04-26T17:35:14.598Z",
+  "orgId": "o0",
+  "series": {
+    "frequency": {
+      "day_of_week": "Sunday",
+      "interval": 2,
+    },
+    "description": "Every 2nd Tuesday of the month until May 2020"
+  },
+}
+```
+
+PUT /event/:eventId
+- Updates (or partially updates) an event. The body of the PUT request should be JSON in the following format. To update a nested value, you must provide the nested value in the proper shape. Omitted values will not be deleted by updating other nested values.
+
+```json
+{
+  "title": "STRING",
+  "local_date_time": "STRING", // (in ISO 8601 format)
+  "orgId": "STRING",
+  "series": {
+    "frequency": {
+      "day_of_week": "STRING",
+      "interval": "NUMBER",
+    },
+    "description": "STRING",
+  },
+}
+```
+
+Example:
+```json
+// title, local_date_time, orgId, series.frequency.day_of_week, & series.description
+// will all retain their values, even though we are updating interval to 1 instead of 2.
+{
+  "series": {
+    "frequency": {
+      "interval": 1
+    }
+  }
+}
+```
+
+DELETE /event/:eventId
+- Removes the target event
