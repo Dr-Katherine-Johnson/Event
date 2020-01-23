@@ -96,7 +96,6 @@ describe('controller', () => {
     // TODO: implement test
   });
 
-  // TODO: add at least one non-happy-path test for each route
   describe('deleteEvent', () => {
     test('calls the mongoose deleteOne method', () => {
       const mockedDeleteOne = eventMock.expects('deleteOne');
@@ -106,6 +105,19 @@ describe('controller', () => {
       const req = mockReq(sampleReq);
       const res = mockRes();
       controller.deleteEvent(req, res, null)
+      mockedDeleteOne.verify();
+    });
+
+    test.only('sends a 500 error back to the client when there\'s a db error', () => {
+      const mockedDeleteOne = eventMock.expects('deleteOne');
+      mockedDeleteOne.returns(Promise.reject());
+      const req = mockReq(sampleReq);
+      const res = mockRes();
+      const sendSpy = sinon.spy(res.send);
+      sendSpy.calledOnceWithExactly();
+      const statusSpy = sinon.spy(res.status);
+      statusSpy.calledOnceWithExactly(500);
+      controller.deleteEvent(req, res, null);
       mockedDeleteOne.verify();
     });
   });

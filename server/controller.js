@@ -92,7 +92,7 @@ module.exports = {
       })
       .catch(err => {
         console.log(err);
-        res.status(400).send(err);
+        res.status(500).send(); // this should only happen if there's a db error of some kind. Purposefully logging it on the server, but NOT transmitting it to the client, for security reasons. Same thing for the catch blocks on the other verbs.
       })
   },
 
@@ -107,6 +107,10 @@ module.exports = {
               res.status(200).json(org.members);
             });
         }
+      })
+      .catch(err => {
+        console.log(err);
+        res.status(400).send(err);
       })
   },
 
