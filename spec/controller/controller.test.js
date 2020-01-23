@@ -9,6 +9,7 @@ const Event = require('../../database/Event.js');
 const Org = require('../../database/Org.js');
 
 chai.use(sinonChai); // TODO: change from using Sinon's assertion style
+const expect = chai.expect;
 
 // TODO: this will probably need to change when benchmarking and stress testing the db ...
 const MAX_NUMBER_OF_EVENTS = 100;
@@ -42,6 +43,24 @@ describe('controller', () => {
     eventMock.restore();
     orgMock.restore();
   })
+
+  describe('checkEventId', () => {
+    test('calls the next middleware when eventId is a number', () => {
+      const nextSpy = sinon.spy();
+      const goodFn = () => controller.checkEventId(sampleReq, {}, nextSpy);
+      expect(goodFn).to.not.throw();
+      expect(nextSpy.calledOnce).to.be.true;
+    });
+
+    test('throws an error when eventId is NOT a number', () => {
+      ['salmon', '', -0.12, Infinity, NaN, true, false, undefined, null, {}, []].forEach(badEventId => {
+        const nextSpy = sinon.spy();
+        const badFn = () => controller.checkEventId(badEventId, {}, nextSpy);
+        expect(badFn).to.throw();
+        expect(nextSpy.notCalled).to.be.true;
+      });
+    });
+  });
 
   describe('getEventTimeDate', () => {
     test('calls the mongoose findOne() method', () => {

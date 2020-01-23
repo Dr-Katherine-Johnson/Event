@@ -111,6 +111,7 @@ module.exports = {
   },
 
   getEventTimeDate(req, res, next) {
+    console.log('timedate');
     Event.findOne({ eventId: req.params.eventId })
       .then((event) => {
         if (event !== null) {
@@ -124,5 +125,17 @@ module.exports = {
           res.status(404).json(errorBody);
         }
       })
+      .catch(err => {
+        console.log(err);
+        res.status(400).send(err);
+      })
+  },
+
+  checkEventId(req, res, next) {
+    if (!Number.isFinite(Number(req.params.eventId))) {
+      throw new Error('The eventId route parameter must be a number. Please check the API section of the README');
+    } else {
+      next();
+    }
   }
 }

@@ -14,6 +14,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, '../public')));
 
+app.all('/event(/timedate)?(/org/members)?/:eventId', controller.checkEventId);
+
 app.get('/event/:eventId', controller.getEvent);
 app.post('/event/:eventId', controller.addEvent);
 app.put('/event/:eventId', controller.updateEvent);
