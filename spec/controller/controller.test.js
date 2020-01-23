@@ -108,7 +108,7 @@ describe('controller', () => {
       mockedDeleteOne.verify();
     });
 
-    test.only('sends a 500 error back to the client when there\'s a db error', () => {
+    test('sends a 500 error back to the client when there\'s a db error', () => {
       const mockedDeleteOne = eventMock.expects('deleteOne');
       mockedDeleteOne.returns(Promise.reject());
       const req = mockReq(sampleReq);
@@ -122,16 +122,34 @@ describe('controller', () => {
     });
   });
 
-  // TODO: add at least one non-happy-path test for each route
   describe('updateEvent', () => {
+    let mockedFindOneAndUpdate = null;
+    beforeEach(() => {
+      mockedFindOneAndUpdate = eventMock.expects('findOneAndUpdate');
+    });
+    afterEach(() => {
+      mockedFindOneAndUpdate = null;
+    })
+
     test('calls the mongoose findOneAndUpdate method', () => {
-      const mockedFindOneAndUpdate = eventMock.expects('findOneAndUpdate');
       mockedFindOneAndUpdate.returns(Promise.resolve('a value'));
       mockedFindOneAndUpdate.withArgs({ eventId: MAX_NUMBER_OF_EVENTS });
 
       const req = mockReq(sampleReq);
       const res = mockRes();
       controller.updateEvent(req, res, null)
+      mockedFindOneAndUpdate.verify();
+    });
+
+    test('', () => {
+      mockedFindOneAndUpdate.returns(Promise.reject());
+      const req = mockReq(sampleReq);
+      const res = mockRes();
+      statusSpy = sinon.spy(res.status);
+      sendSpy = sinon.spy(res.send);
+      controller.updateEvent(req, res, null);
+      statusSpy.calledOnceWithExactly(500)
+      sendSpy.calledOnceWithExactly();
       mockedFindOneAndUpdate.verify();
     });
 

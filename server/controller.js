@@ -29,7 +29,7 @@ module.exports = {
       })
       .catch(err => {
         console.log(err);
-        res.send(err);
+        res.status(500).send(); // this should only happen if there's a db error of some kind. Purposefully logging it on the server, but NOT transmitting it to the client, for security reasons. Same thing for the catch blocks on update & delete.
       })
   },
 
@@ -48,7 +48,6 @@ module.exports = {
       })
       .catch(err => {
         console.log(err);
-
         res.status(400).send(err);
       })
   },
@@ -81,7 +80,7 @@ module.exports = {
       })
       .catch(err => {
         console.log(err);
-        res.status(400).send(err);
+        res.status(500).send();
       })
   },
 
@@ -92,7 +91,7 @@ module.exports = {
       })
       .catch(err => {
         console.log(err);
-        res.status(500).send(); // this should only happen if there's a db error of some kind. Purposefully logging it on the server, but NOT transmitting it to the client, for security reasons. Same thing for the catch blocks on the other verbs.
+        res.status(500).send();
       })
   },
 
