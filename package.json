@@ -22,8 +22,7 @@
   "scripts": {
     "test": "jest",
     "db-cassandra:seed": "cqlsh -f ./database/event-schema.cql && node ./database/seed.js",
-    "db-mysql:seed": "mysql -u root < ./database/mysql-schema.sql",
-    "mysql:seed": "mysql -u root < ./database/mysql-schema.sql && node ./database/seed.js",
+    "db-mysql:seed": "mysql -u root < ./database/mysql-schema.sql && node ./database/seed.js",
     "build:dev": "webpack -d --watch",
     "build:prod": "webpack -p",
     "start:dev": "nodemon server/index.js",

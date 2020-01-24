@@ -12,7 +12,7 @@ CREATE TABLE org (
 CREATE TABLE series (
   id INT AUTO_INCREMENT PRIMARY KEY,
   series_description VARCHAR(255),
-  day_of_week DATETIME,
+  day_of_week VARCHAR(255),
   series_interval INT
 );
 

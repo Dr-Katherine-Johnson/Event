@@ -3,12 +3,13 @@
 /* eslint-disable prefer-const */
 const faker = require('faker');
 // const db = require('./index-cassandra.js');
-const db = require('./index-mysql.js');
 const Event = require('./Event.js');
 const Org = require('./Org.js');
 const cassandra = require('cassandra-driver')
 const Uuid = cassandra.types.Uuid;
 
+const db = require('./index-mysql.js');
+const mysql = require('mysql');
 
 // Given a maximum quantity max, returns an array of memberIds between 1 and max
 const memberIds = (max) => {
@@ -55,28 +56,46 @@ const events = [];
 //      },
 //   }
 
-const NUMBER_OF_EVENTS = 10000000;
+const NUMBER_OF_EVENTS = 1000;
 console.time('event');
-let generateEvents = (times) => {
+// // cassandra version
+// let generateEvents = (times) => {
+//   if (times === 0) { return console.timeEnd('event'); }
+//   const event = {
+//     event_id: Uuid.random(),
+//     title: faker.company.catchPhrase(),
+//     local_date_time: faker.date.between('2019-10-01', '2020-4-30'),
+//     org_id: Uuid.random(),
+//     series: Uuid.random(),
+//   };
+//   Event.insert(event)
+//     .then(result => {
+//       // console.count();
+//       generateEvents(times - 1);
+//     })
+//     .catch(err => {
+//       console.log(err);
+//     })
+// };
+
+// mysql version
+let generateSeries = (times) => {
   if (times === 0) { return console.timeEnd('event'); }
-  const event = {
-    event_id: Uuid.random(),
-    title: faker.company.catchPhrase(),
-    local_date_time: faker.date.between('2019-10-01', '2020-4-30'),
-    org_id: Uuid.random(),
-    series: Uuid.random(),
-  };
-  Event.insert(event)
-    .then(result => {
-      // console.count();
-      generateEvents(times - 1);
-    })
-    .catch(err => {
-      console.log(err);
-    })
+
+  const day_of_week = faker.date.weekday();
+  const series_interval = faker.random.number(2);
+  const ordinal = ['1st', '2nd', '3rd'][series_interval];
+  const series_description = `Every ${ordinal} ${day_of_week} of the month until May 2020`
+
+  const args = [series_description, day_of_week, series_interval]
+  db.query(`INSERT INTO series (series_description, day_of_week, series_interval) VALUES (?, ?, ?)`, args, (err, results, fields) => {
+    if (err) throw err;
+    generateSeries(times - 1);
+  });
 };
 
-generateEvents(NUMBER_OF_EVENTS);
+generateSeries(NUMBER_OF_EVENTS);
+// generateEvents(NUMBER_OF_EVENTS);
 
 const organizations = [];
 
