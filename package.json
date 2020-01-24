@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "test": "jest",
-    "db:seed": "node ./database/seed.js",
+    "db:seed": "cqlsh -f ./database/event-schema.cql && node ./database/seed.js",
     "build:dev": "webpack -d --watch",
     "build:prod": "webpack -p",
     "start:dev": "nodemon server/index.js",

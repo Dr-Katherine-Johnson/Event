@@ -1,5 +1,5 @@
 const cassandra = require('cassandra-driver');
-const Mapper = cassandra.mapping.mapper;
+const Mapper = cassandra.mapping.Mapper;
 const db = require('./index.js');
 
 const mapper = new Mapper(db, {
@@ -8,7 +8,7 @@ const mapper = new Mapper(db, {
   }
 });
 
-const eventMapper = mapper.forModel('Video');
+const eventMapper = mapper.forModel('Event');
 
 // const eventSchema = new Schema({
 //   eventId: Number,

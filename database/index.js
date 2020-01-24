@@ -7,4 +7,4 @@ const db = new cassandra.Client({
 });
 
 db.connect();
-export default db;
+module.exports = db;

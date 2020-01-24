@@ -54,16 +54,24 @@ const events = [];
 const NUMBER_OF_EVENTS = 100;
 let generateEvents = () => {
   for (let i = 0; i < NUMBER_OF_EVENTS; i += 1) {
-    events.push({
+    const event = {
       eventId: i,
       title: faker.company.catchPhrase(),
       local_date_time: faker.date.between('2019-10-01', '2020-4-30'),
       orgId: `o${faker.random.number(19)}`,
       series: eventSeries(),
-    });
+    };
+    Event.insert(event)
+      .then(result => {
+        console.log(result);
+      })
+      .catch(err => {
+        console.log(err);
+      })
   }
-  return events;
 };
+
+generateEvents();
 
 const organizations = [];
 
@@ -77,25 +85,25 @@ const organizations = [];
 //    group_members: [ memberId, otherMemberId , …],
 //  }
 
-// There are usually less organizations than there are events
-// Or, in other words, each organization can hold multiple events, of which there are 100
-// With 20 events distributed evenly that is an average of 5 events per org
-let generateOrgs = () => {
-  for (let i = 0; i < 20; i += 1) {
-    organizations.push({
-      orgId: `o${i}`,
-      org_name: faker.company.companyName(),
-      org_private: faker.random.boolean(),
-      members: orgMembers(),
-    });
-  }
-};
+// // There are usually less organizations than there are events
+// // Or, in other words, each organization can hold multiple events, of which there are 100
+// // With 20 events distributed evenly that is an average of 5 events per org
+// let generateOrgs = () => {
+//   for (let i = 0; i < 20; i += 1) {
+//     organizations.push({
+//       orgId: `o${i}`,
+//       org_name: faker.company.companyName(),
+//       org_private: faker.random.boolean(),
+//       members: orgMembers(),
+//     });
+//   }
+// };
 
-generateOrgs();
-generateEvents();
+// generateOrgs();
+// generateEvents();
 
-module.exports.organizations = organizations;
-module.exports.events = events;
+// module.exports.organizations = organizations;
+// module.exports.events = events;
 
 // const insertSampleEventsAndOrgs = () => {
 //   console.time('org');
