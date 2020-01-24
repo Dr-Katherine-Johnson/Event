@@ -1,12 +1,10 @@
-const mongoose = require('mongoose');
+const cassandra = require('cassandra-driver');
 
-const mongoUri = 'mongodb://localhost/event';
+const db = new cassandra.Client({
+  contactPoints: ['localhost'],
+  localDataCenter: 'datacenter1',
+  keyspace: 'event'
+});
 
-// Mongo deprecated a function Mongoose uses internally, this should address the issue
-mongoose.set('useFindAndModify', false);
-
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
-
-const db = mongoose.connection;
-
-module.exports = db;
+db.connect();
+export default db;

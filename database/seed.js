@@ -51,7 +51,7 @@ const events = [];
 //      },
 //   }
 
-const NUMBER_OF_EVENTS = 100000;
+const NUMBER_OF_EVENTS = 100;
 let generateEvents = () => {
   for (let i = 0; i < NUMBER_OF_EVENTS; i += 1) {
     events.push({
@@ -97,22 +97,22 @@ generateEvents();
 module.exports.organizations = organizations;
 module.exports.events = events;
 
-const insertSampleEventsAndOrgs = () => {
-  console.time('org');
-  Org.create(organizations)
-    .then((results) => {
-      console.timeEnd('org');
-      console.log('orgs seeded');
-      console.time('event');
-      return Event.create(events);
-    })
-    .then((results) => {
-      console.log('NUMBER_OF_EVENTS: ', NUMBER_OF_EVENTS);
-      console.timeEnd('event');
-      console.log('events seeded');
-      console.log('finished seeding database!');
-      db.close();
-    });
-};
+// const insertSampleEventsAndOrgs = () => {
+//   console.time('org');
+//   Org.create(organizations)
+//     .then((results) => {
+//       console.timeEnd('org');
+//       console.log('orgs seeded');
+//       console.time('event');
+//       return Event.create(events);
+//     })
+//     .then((results) => {
+//       console.log('NUMBER_OF_EVENTS: ', NUMBER_OF_EVENTS);
+//       console.timeEnd('event');
+//       console.log('events seeded');
+//       console.log('finished seeding database!');
+//       db.close();
+//     });
+// };
 
-insertSampleEventsAndOrgs();
+// insertSampleEventsAndOrgs();
