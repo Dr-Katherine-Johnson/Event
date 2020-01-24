@@ -5,6 +5,8 @@ const faker = require('faker');
 const db = require('./index.js');
 const Event = require('./Event.js');
 const Org = require('./Org.js');
+const cassandra = require('cassandra-driver')
+const Uuid = cassandra.types.Uuid;
 
 // Given a maximum quantity max, returns an array of memberIds between 1 and max
 const memberIds = (max) => {
@@ -55,15 +57,16 @@ const NUMBER_OF_EVENTS = 100;
 let generateEvents = () => {
   for (let i = 0; i < NUMBER_OF_EVENTS; i += 1) {
     const event = {
-      eventId: i,
+      event_id: Uuid.random(),
       title: faker.company.catchPhrase(),
       local_date_time: faker.date.between('2019-10-01', '2020-4-30'),
-      orgId: `o${faker.random.number(19)}`,
-      series: eventSeries(),
+      org_id: Uuid.random(),
+      series: Uuid.random(),
     };
     Event.insert(event)
       .then(result => {
         console.log(result);
+        console.count();
       })
       .catch(err => {
         console.log(err);
