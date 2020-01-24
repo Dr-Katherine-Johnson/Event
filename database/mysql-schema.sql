@@ -1,59 +1,56 @@
 DROP DATABASE IF EXISTS events;
 CREATE DATABASE events;
 
+use events;
+
 CREATE TABLE org (
-  org_id INT AUTO_INCREMENT,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   org_name VARCHAR(255),
-  org_private BOOLEAN,
-  PRIMARY KEY (org_id)
+  org_private BOOLEAN
 );
 
 CREATE TABLE series (
-  series_id INT AUTO_INCREMENT,
-  description VARCHAR(255),
-  day_of_week datetime,
-  interval INT,
-  PRIMARY KEY (series_id)
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  series_description VARCHAR(255),
+  day_of_week DATETIME,
+  series_interval INT
 );
 
 CREATE TABLE person (
-  person_id INT AUTO_INCREMENT,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   first_name VARCHAR(255),
   last_name VARCHAR(255),
-  identifier VARCHAR(255),
-  PRIMARY KEY (person_id)
+  identifier VARCHAR(255)
 );
 
 CREATE TABLE event (
-  event_id INT AUTO_INCREMENT,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255),
-  local_date_time datetime,
+  local_date_time DATETIME,
   org_id INT,
   FOREIGN KEY (org_id)
-    REFERENCES org (org_id)
-    ON UPDATE RESTRICT
+    REFERENCES org (id)
     ON DELETE CASCADE
+    ON UPDATE CASCADE,
   series_id INT,
   FOREIGN KEY (series_id)
-    REFERENCES series (series_id)
-    ON UPDATE RESTRICT
+    REFERENCES series (id)
     ON DELETE CASCADE
-  PRIMARY KEY (event_id)
+    ON UPDATE CASCADE
 );
 
 CREATE TABLE org_person (
-  org_person_id INT AUTO_INCREMENT,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   org_id INT,
   FOREIGN KEY (org_id)
-    REFERENCES org (org_id)
-    ON UPDATE RESTRICT
+    REFERENCES org (id)
     ON DELETE CASCADE
+    ON UPDATE CASCADE,
   person_id INT,
   FOREIGN KEY (person_id)
-    REFERENCES person (person_id)
-    ON UPDATE RESTRICT
+    REFERENCES person (id)
     ON DELETE CASCADE
+    ON UPDATE CASCADE,
   founder BOOLEAN,
-  member BOOLEAN,
-  PRIMARY KEY (org_person_id)
+  member BOOLEAN
 );
