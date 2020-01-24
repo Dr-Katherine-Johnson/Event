@@ -21,7 +21,9 @@
   ],
   "scripts": {
     "test": "jest",
-    "db:seed": "cqlsh -f ./database/event-schema.cql && node ./database/seed.js",
+    "db-cassandra:seed": "cqlsh -f ./database/event-schema.cql && node ./database/seed.js",
+    "db-mysql:seed": "mysql -u root < ./database/mysql-schema.sql",
+    "mysql:seed": "mysql -u root < ./database/mysql-schema.sql && node ./database/seed.js",
     "build:dev": "webpack -d --watch",
     "build:prod": "webpack -p",
     "start:dev": "nodemon server/index.js",
@@ -80,6 +82,7 @@
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "mongoose": "^5.7.12",
+    "mysql": "^2.18.1",
     "query-string": "^6.9.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",

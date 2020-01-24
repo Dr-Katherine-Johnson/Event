@@ -1,6 +1,6 @@
 const cassandra = require('cassandra-driver');
 const Mapper = cassandra.mapping.Mapper;
-const db = require('./index.js');
+const db = require('./index-cassandra.js');
 
 const mapper = new Mapper(db, {
   models: {

@@ -2,11 +2,13 @@
 /* eslint-disable camelcase */
 /* eslint-disable prefer-const */
 const faker = require('faker');
-const db = require('./index.js');
+// const db = require('./index-cassandra.js');
+const db = require('./index-mysql.js');
 const Event = require('./Event.js');
 const Org = require('./Org.js');
 const cassandra = require('cassandra-driver')
 const Uuid = cassandra.types.Uuid;
+
 
 // Given a maximum quantity max, returns an array of memberIds between 1 and max
 const memberIds = (max) => {
@@ -53,28 +55,28 @@ const events = [];
 //      },
 //   }
 
-const NUMBER_OF_EVENTS = 100;
-let generateEvents = () => {
-  for (let i = 0; i < NUMBER_OF_EVENTS; i += 1) {
-    const event = {
-      event_id: Uuid.random(),
-      title: faker.company.catchPhrase(),
-      local_date_time: faker.date.between('2019-10-01', '2020-4-30'),
-      org_id: Uuid.random(),
-      series: Uuid.random(),
-    };
-    Event.insert(event)
-      .then(result => {
-        console.log(result);
-        console.count();
-      })
-      .catch(err => {
-        console.log(err);
-      })
-  }
+const NUMBER_OF_EVENTS = 10000000;
+console.time('event');
+let generateEvents = (times) => {
+  if (times === 0) { return console.timeEnd('event'); }
+  const event = {
+    event_id: Uuid.random(),
+    title: faker.company.catchPhrase(),
+    local_date_time: faker.date.between('2019-10-01', '2020-4-30'),
+    org_id: Uuid.random(),
+    series: Uuid.random(),
+  };
+  Event.insert(event)
+    .then(result => {
+      // console.count();
+      generateEvents(times - 1);
+    })
+    .catch(err => {
+      console.log(err);
+    })
 };
 
-generateEvents();
+generateEvents(NUMBER_OF_EVENTS);
 
 const organizations = [];
 
