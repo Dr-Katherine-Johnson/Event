@@ -57,7 +57,7 @@ const events = [];
 //   }
 
 const NUMBER_OF_EVENTS = 1000;
-console.time('event');
+// console.time('event');
 // // cassandra version
 // let generateEvents = (times) => {
 //   if (times === 0) { return console.timeEnd('event'); }
@@ -80,7 +80,7 @@ console.time('event');
 
 // mysql version
 let generateSeries = (times) => {
-  if (times === 0) { return console.timeEnd('event'); }
+  if (times === 0) { return console.timeEnd('series'); }
 
   const day_of_week = faker.date.weekday();
   const series_interval = faker.random.number(2);
@@ -94,7 +94,20 @@ let generateSeries = (times) => {
   });
 };
 
+let generatePerson = (times) => {
+  if (times === 0) { return console.timeEnd('person'); }
+
+  const args = [faker.company.companyName(), faker.random.number(1) === 0 ? true : false];
+  db.query('INSERT INTO org (org_name, org_private) VALUES (?, ?)', args, (err, results, fields) => {
+    if (err) throw err;
+    generatePerson(times - 1);
+  });
+}
+
+console.time('series');
 generateSeries(NUMBER_OF_EVENTS);
+console.time('person');
+generatePerson(NUMBER_OF_EVENTS);
 // generateEvents(NUMBER_OF_EVENTS);
 
 const organizations = [];
