@@ -83,9 +83,9 @@ const NUMBERS = {
   // EVENTS: 100000, // target 10,000,000
   // ORGS: 100000, // target 2,000,000
   // PEOPLE: 100000 // target 1,000,000
-  EVENTS: 10,
-  ORGS: 10,
-  PEOPLE: 10
+  EVENTS: 1000,
+  ORGS: 1000,
+  PEOPLE: 1000
 };
 
 // mysql version
@@ -149,36 +149,54 @@ const generateEvent = (times, cb) => {
   })
 }
 
-const generateOrgPerson = (cb) => {
-  const args = [];
+const generateOrgPerson = (org_id = 1, person_id = 0, numFounders = 0, numMembers = 0, founder = false, member = false, cb) => {
   // up to 4 founders
   // up to 50 members
-  let founder;
-  let member;
-  let numFounders;
-  let numMembers;
-  for (let i = 1; i <= NUMBERS.ORGS; i++) {
-    numFounders = 0;
-    numMembers = 0
-    for (let j = 1; j <= NUMBERS.PEOPLE; j++) {
-      founder = false;
-      if (numFounders < 4 && Math.random() >= 0.5) {
-        founder = true;
-        numFounders++;
-      }
+  let args = [];
 
+  if (person_id === NUMBERS.PEOPLE) {
+    if (org_id === NUMBERS.ORGS) {
+      // base case
+      return;
+    } else {
+      // new org
+      // increment org_id
+      org_id += 1;
+      // reset to defaults
+      person_id = 1;
+      numFounders = 0;
+      numMembers = 0;
+      founder = false;
       member = false;
-      if (numMembers < 50 && Math.random() >= 0.5) {
-        member = true;
-        numMembers++;
-      }
-      args.push([i, j, founder, member]);
     }
+  } else {
+    // new person
+    // increment person_id, query, & recurse
+    person_id += 1;
+    // generateOrgPerson(org_id, person_id, numFounders, numMembers, founder, member, cb);
   }
-  const statement = `INSERT INTO org_person (org_id, person_id, founder, member) VALUES ?;`;
-  db.query(statement, [args], (err, results, fields) => {
+
+
+  // this section should get executed in everything except the base case
+  // determine if this person is a founder or member
+  if (numFounders < 4 && Math.random() >= 0.5) {
+    founder = true;
+    numFounders++;
+  }
+  if (numMembers < 50 && Math.random() >= 0.5) {
+    member = true;
+    numMembers++;
+  }
+
+  args = [org_id, person_id, founder, member];
+  const statement = `INSERT INTO org_person (org_id, person_id, founder, member) VALUES (?, ?, ?, ?);`;
+  db.query(statement, args, (err, results, fields) => {
     if (err) throw err;
-    cb(null, null);
+    // console.log(results);
+    if (results.insertId === NUMBERS.ORGS * NUMBERS.PEOPLE) {
+      cb(null, null);
+    }
+    generateOrgPerson(org_id, person_id, numFounders, numMembers, founder, member, cb);
   });
 }
 
@@ -195,9 +213,10 @@ generateSeries(() => {
       generateEvent(NUMBERS.EVENTS, () => {
         console.timeEnd('event');
         console.time('org_person');
-        generateOrgPerson(() => {
+        generateOrgPerson(1, 0, 0, 0, false, false, () => {
           console.timeEnd('org_person');
           console.log('finished');
+          db.end();
         });
       });
     });
