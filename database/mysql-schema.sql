@@ -20,6 +20,7 @@ CREATE TABLE person (
   id INT AUTO_INCREMENT PRIMARY KEY,
   first_name VARCHAR(255),
   last_name VARCHAR(255),
+  -- this was a holdover from the legacy database (MongoDB), where the identifier for each person was a string like `m0` `m145` `m487` etc...
   identifier VARCHAR(255)
 );
 

@@ -16,7 +16,7 @@ const memberIds = (max) => {
   const ids = [];
   const numberOfElements = faker.random.number({ min: 1, max });
   for (let i = 0; i < numberOfElements; i += 1) {
-    const newId = `m${faker.random.number(499)}`;
+    const newId = `m${faker.random.number(499)}`; // changing this to have first_name and last_name with a unique id (ie, b/c member numbers could repeat ...)
     ids.push(newId);
   }
   return ids;
@@ -80,25 +80,40 @@ const NUMBER_OF_EVENTS = 1000;
 
 // mysql version
 let generateSeries = (times) => {
-  if (times === 0) { return console.timeEnd('series'); }
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const ordinalList = ['1st', '2nd', '3rd'];
 
-  const day_of_week = faker.date.weekday();
-  const series_interval = faker.random.number(2);
-  const ordinal = ['1st', '2nd', '3rd'][series_interval];
-  const series_description = `Every ${ordinal} ${day_of_week} of the month until May 2020`
+  const args = [];
+  for (let i = 0; i < 3; i++) {
+    const ordinal = ordinalList[i];
+    for (let j = 0; j < 7; j++) {
+      const day_of_week = days[j];
+      args.push([`Every ${ordinal} ${day_of_week} of the month until May 2020`, day_of_week, i]);
+    }
+  }
 
-  const args = [series_description, day_of_week, series_interval]
-  db.query(`INSERT INTO series (series_description, day_of_week, series_interval) VALUES (?, ?, ?)`, args, (err, results, fields) => {
+  let statement = `INSERT INTO series (series_description, day_of_week, series_interval) VALUES ?;`;
+  db.query(statement, [args], (err, results, fields) => {
     if (err) throw err;
-    generateSeries(times - 1);
+    console.timeEnd('series')
   });
 };
+
+let generateOrg = (times) => {
+  if (times === 0) { return console.timeEnd('org'); }
+
+  const args = [faker.company.companyName(), faker.random.number(1) === 0 ? true : false];
+  db.query('INSERT INTO org (org_name, org_private) VALUES (?, ?)', args, (err, results, fields) => {
+    if (err) throw err;
+    generateOrg(times - 1);
+  });
+}
 
 let generatePerson = (times) => {
   if (times === 0) { return console.timeEnd('person'); }
 
-  const args = [faker.company.companyName(), faker.random.number(1) === 0 ? true : false];
-  db.query('INSERT INTO org (org_name, org_private) VALUES (?, ?)', args, (err, results, fields) => {
+  const args = [faker.name.firstName(), faker.name.lastName()];
+  db.query('INSERT INTO person (first_name, last_name) VALUES (?, ?)', args, (err, results, fields) => {
     if (err) throw err;
     generatePerson(times - 1);
   });
@@ -106,6 +121,8 @@ let generatePerson = (times) => {
 
 console.time('series');
 generateSeries(NUMBER_OF_EVENTS);
+console.time('org');
+generateOrg(NUMBER_OF_EVENTS);
 console.time('person');
 generatePerson(NUMBER_OF_EVENTS);
 // generateEvents(NUMBER_OF_EVENTS);
