@@ -56,7 +56,7 @@ const events = [];
 //      },
 //   }
 
-const NUMBER_OF_EVENTS = 1000;
+
 // console.time('event');
 // // cassandra version
 // let generateEvents = (times) => {
@@ -78,8 +78,18 @@ const NUMBER_OF_EVENTS = 1000;
 //     })
 // };
 
+
+const NUMBERS = {
+  // EVENTS: 100000, // target 10,000,000
+  // ORGS: 100000, // target 2,000,000
+  // PEOPLE: 100000 // target 1,000,000
+  EVENTS: 10,
+  ORGS: 10,
+  PEOPLE: 10
+};
+
 // mysql version
-let generateSeries = (times) => {
+const generateSeries = (cb) => {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const ordinalList = ['1st', '2nd', '3rd'];
 
@@ -95,37 +105,67 @@ let generateSeries = (times) => {
   let statement = `INSERT INTO series (series_description, day_of_week, series_interval) VALUES ?;`;
   db.query(statement, [args], (err, results, fields) => {
     if (err) throw err;
-    console.timeEnd('series')
+    cb(null, results);
   });
 };
 
-let generateOrg = (times) => {
-  if (times === 0) { return console.timeEnd('org'); }
+const generateOrg = (times, cb, count = 0) => {
+  if (times === 0) {
+    return cb(null, null);
+  }
 
   const args = [faker.company.companyName(), faker.random.number(1) === 0 ? true : false];
   db.query('INSERT INTO org (org_name, org_private) VALUES (?, ?)', args, (err, results, fields) => {
     if (err) throw err;
-    generateOrg(times - 1);
+    generateOrg(times - 1, cb, count + 1);
   });
 }
 
-let generatePerson = (times) => {
-  if (times === 0) { return console.timeEnd('person'); }
+const generatePerson = (times, cb) => {
+  if (times === 0) {
+    return cb(null, null);
+  }
 
   const args = [faker.name.firstName(), faker.name.lastName()];
   db.query('INSERT INTO person (first_name, last_name) VALUES (?, ?)', args, (err, results, fields) => {
     if (err) throw err;
-    generatePerson(times - 1);
+    generatePerson(times - 1, cb);
   });
 }
 
+const generateEvent = (times, cb) => {
+  if (times === 0) { return cb(null, null); }
+
+  const args = [
+    faker.company.catchPhrase(),
+    faker.date.between('2019-10-01', '2020-4-30'),
+    faker.random.number({ min: 1, max: NUMBERS.ORGS }),
+    faker.random.number({ min: 1, max: 21 })
+  ];
+  const statement = `INSERT INTO event (title, local_date_time, org_id, series_id) VALUES (?, ?, ?, ?);`;
+  db.query(statement, args, (err, results, fields) => {
+    if (err) throw err;
+    generateEvent(times - 1, cb);
+  })
+}
+
 console.time('series');
-generateSeries(NUMBER_OF_EVENTS);
-console.time('org');
-generateOrg(NUMBER_OF_EVENTS);
-console.time('person');
-generatePerson(NUMBER_OF_EVENTS);
-// generateEvents(NUMBER_OF_EVENTS);
+generateSeries(() => {
+  console.timeEnd('series');
+  console.time('org');
+  generateOrg(NUMBERS.ORGS, () => {
+    console.timeEnd('org');
+    console.time('person');
+    generatePerson(NUMBERS.PEOPLE, () => {
+      console.timeEnd('person');
+      console.time('event');
+      generateEvent(NUMBERS.EVENTS, () => {
+        console.timeEnd('event')
+        console.log('finished')
+      });
+    });
+  });
+});
 
 const organizations = [];
 
@@ -176,5 +216,4 @@ const organizations = [];
 //       db.close();
 //     });
 // };
-
 // insertSampleEventsAndOrgs();
