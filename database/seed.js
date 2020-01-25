@@ -94,9 +94,9 @@ const generateSeries = (cb) => {
   const ordinalList = ['1st', '2nd', '3rd'];
 
   const args = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 1; i <= 3; i++) {
     const ordinal = ordinalList[i];
-    for (let j = 0; j < 7; j++) {
+    for (let j = 1; j <= 7; j++) {
       const day_of_week = days[j];
       args.push([`Every ${ordinal} ${day_of_week} of the month until May 2020`, day_of_week, i]);
     }
@@ -149,6 +149,39 @@ const generateEvent = (times, cb) => {
   })
 }
 
+const generateOrgPerson = (cb) => {
+  const args = [];
+  // up to 4 founders
+  // up to 50 members
+  let founder;
+  let member;
+  let numFounders;
+  let numMembers;
+  for (let i = 1; i <= NUMBERS.ORGS; i++) {
+    numFounders = 0;
+    numMembers = 0
+    for (let j = 1; j <= NUMBERS.PEOPLE; j++) {
+      founder = false;
+      if (numFounders < 4 && Math.random() >= 0.5) {
+        founder = true;
+        numFounders++;
+      }
+
+      member = false;
+      if (numMembers < 50 && Math.random() >= 0.5) {
+        member = true;
+        numMembers++;
+      }
+      args.push([i, j, founder, member]);
+    }
+  }
+  const statement = `INSERT INTO org_person (org_id, person_id, founder, member) VALUES ?;`;
+  db.query(statement, [args], (err, results, fields) => {
+    if (err) throw err;
+    cb(null, null);
+  });
+}
+
 console.time('series');
 generateSeries(() => {
   console.timeEnd('series');
@@ -160,8 +193,12 @@ generateSeries(() => {
       console.timeEnd('person');
       console.time('event');
       generateEvent(NUMBERS.EVENTS, () => {
-        console.timeEnd('event')
-        console.log('finished')
+        console.timeEnd('event');
+        console.time('org_person');
+        generateOrgPerson(() => {
+          console.timeEnd('org_person');
+          console.log('finished');
+        });
       });
     });
   });
