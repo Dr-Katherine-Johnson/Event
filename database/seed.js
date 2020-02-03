@@ -184,6 +184,117 @@ generateSeries(() => {
 // //   }
 
 
+// TODO: cassandra questions
+  // how does denormalized data stay in sync with other denormalized data??
+
+  // common queries
+  // Q1 view events by date or date range
+  // Q2 view details about a given event,
+    // its organization details
+    // series details (time frequency)
+  // Q3 view events a particular person has attended / plans to attend
+  // Q4 view events an organization has created
+  // Q5 view events by day_of_week
+  // Q5A view events by interval
+
+  // TODO: how to handle these??
+  // Q6 add an event
+  // Q7 update an event by Id
+  // Q8 delete an event by Id
+
+  // Q9 view people in an organization
+  // view founders
+  // view members
+  // Q9A view attendees by event_id
+
+  // TODO: how to handle these??
+  // Q10 create a new organization
+  // Q11 update an organization
+  // Q12 delete an organization
+
+  // view all organizations a person interacts with:
+  // Q13 as a founder
+  // Q13A as a member
+
+  // TODO: how to handle these??
+  // Q14 create a new person
+  // Q15 update a person
+  // Q16 delete a person
+
+
+  // TODO: create Chebotko logical data models to support these queries
+
+  // TODO: should the org_id, series_id, person_id key's be replaced with data from their various columns in their respective tables in SQL?
+
+  // --> Q1
+  // -- events_by_date --
+  // local_date_time K
+  // event_id
+  // title
+  // org_id
+  // series_id
+
+  // --> Q2
+  // -- event_details_by_id --
+  // event_id K
+  // org_id
+  // series_id
+
+  // --> Q3
+  // -- events_by_person --
+  // person_id K
+  // event_id
+
+  // --> Q4
+  // -- events_by_organization --
+  // org_id K
+  // event_id
+
+  // --> Q5
+  // -- events_by_day_of_week --
+  // day_of_week K
+  // series_interval C^
+  // event_id
+  // series_description
+
+  // --> Q5A
+  // -- events_by_series_interval --
+  // series_interval K
+  // day_of_week C^
+  // event_id
+  // series_description
+
+  // --> Q9
+  // -- person_by_org_name --
+  // org_name K
+  // person_id
+  // // TODO: or only the person_id ??
+  // first_name
+  // last_name
+  // identifier
+  // founder
+  // member
+
+  // --> Q9A
+  // -- person_by_event --
+  // event_id K
+  // person_id C^
+  // first_name
+  // last_name
+  // identifier
+
+  // --> Q13
+  // -- org_by_person_founder --
+  // person_id K
+  // founder C^
+  // org_id
+
+  // --> Q13A
+  // -- org_by_person_member --
+  // person_id K
+  // member C^
+  // org_id
+
 // // console.time('event');
 // // // cassandra version
 // // let generateEvents = (times) => {
