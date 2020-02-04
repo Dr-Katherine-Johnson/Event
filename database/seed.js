@@ -47,7 +47,7 @@ const NUMBERS = {
 };
 
 // mysql version
-const generateSeries = (cb) => {
+const generateSeries = (useMySQL = true, cb) => {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const ordinalList = ['1st', '2nd', '3rd'];
 
@@ -60,11 +60,16 @@ const generateSeries = (cb) => {
     }
   }
 
-  let statement = `INSERT INTO series (series_description, day_of_week, series_interval) VALUES ?;`;
-  db.query(statement, [args], (err, results, fields) => {
-    if (err) throw err;
-    cb(null, results);
-  });
+  if (useMySQL) {
+    let statement = `INSERT INTO series (series_description, day_of_week, series_interval) VALUES ?;`;
+    db.query(statement, [args], (err, results, fields) => {
+      if (err) throw err;
+      cb(null, results);
+    });
+  } else {
+    // TODO ...
+  }
+
 };
 
 const generateOrg = (times, cb, count = 0) => {
@@ -143,29 +148,6 @@ const generateOrgPerson = (org_id = 1, person_id = 0, numFounders = 0, numMember
   });
 }
 
-console.time('series');
-generateSeries(() => {
-  console.timeEnd('series');
-  console.time('org');
-  generateOrg(NUMBERS.ORGS, () => {
-    console.timeEnd('org');
-    console.time('person');
-    generatePerson(NUMBERS.PEOPLE, () => {
-      console.timeEnd('person');
-      console.time('event');
-      generateEvent(NUMBERS.EVENTS, () => {
-        console.timeEnd('event');
-        console.time('org_person');
-        generateOrgPerson(1, 0, 0, 0, false, false, () => {
-          console.timeEnd('org_person');
-          console.log('finished seeding database!');
-          db.end();
-        });
-      });
-    });
-  });
-});
-
 // const events = [];
 // const organizations = [];
 
@@ -183,9 +165,11 @@ generateSeries(() => {
 // //      },
 // //   }
 
-
-// TODO: cassandra questions
+const cassandraNotes = {
+  // TODO: cassandra questions
   // how does denormalized data stay in sync with other denormalized data??
+
+  // TODO: also, when seeding, how do I ensure that the duplicated data between cassandra tables has the same relationship in every table that it appears in. ie, the same event belongs to the same organization and has the same series in all the tables that have that event, whether querying by_date, by_id, by_person, etc ...
 
   // common queries
   // Q1 view events by date or date range
@@ -310,6 +294,41 @@ generateSeries(() => {
   // org_id uuid K
   // org_name text
   // org_private boolean
+
+  // TODO: add tables for series by id ??
+};
+
+const seed = (useMySQL = true) => {
+  if (useMySQl) {
+    console.time('series');
+    generateSeries(() => {
+      console.timeEnd('series');
+      console.time('org');
+      generateOrg(NUMBERS.ORGS, () => {
+        console.timeEnd('org');
+        console.time('person');
+        generatePerson(NUMBERS.PEOPLE, () => {
+          console.timeEnd('person');
+          console.time('event');
+          generateEvent(NUMBERS.EVENTS, () => {
+            console.timeEnd('event');
+            console.time('org_person');
+            generateOrgPerson(1, 0, 0, 0, false, false, () => {
+              console.timeEnd('org_person');
+              console.log('finished seeding database!');
+              db.end();
+            });
+          });
+        });
+      });
+    });
+  } else {
+
+  }
+}
+
+// seed(true); MySQL
+seed(false); Cassandra
 
 // // console.time('event');
 // // // cassandra version
