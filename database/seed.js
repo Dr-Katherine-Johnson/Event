@@ -100,7 +100,7 @@ const generateEvent = (times, cb) => {
     faker.random.number({ min: 1, max: NUMBERS.ORGS }),
     faker.random.number({ min: 1, max: 21 })
   ];
-  const statement = `INSERT INTO event (title, local_date_time, org_id, series_id) VALUES (?, ?, ?, ?);`;
+  const statement = `INSERT INTO event (title, local_date_time, org_id, series_id uuid) VALUES (?, ?, ?, ?);`;
   db.query(statement, args, (err, results, fields) => {
     if (err) throw err;
     generateEvent(times - 1, cb);
@@ -206,6 +206,7 @@ generateSeries(() => {
   // view founders
   // view members
   // Q9A view attendees by event_id
+  // Q9B view person by id
 
   // TODO: how to handle these??
   // Q10 create a new organization
@@ -215,85 +216,100 @@ generateSeries(() => {
   // view all organizations a person interacts with:
   // Q13 as a founder
   // Q13A as a member
+  // Q13B view org details by id
 
   // TODO: how to handle these??
   // Q14 create a new person
   // Q15 update a person
   // Q16 delete a person
 
+  // THEY'RE OBJECTS!
+
+  // OPTION1: Troy did this >>> generating data into a csv and then copying the CSV into cassandra
 
   // TODO: create Chebotko logical data models to support these queries
 
-  // TODO: should the org_id, series_id, person_id key's be replaced with data from their various columns in their respective tables in SQL?
+  // TODO: should the org_id, series_id uuid, person_id key's be replaced with data from their various Cassandra columns in their respective Cassandra tables in CQL? or should the same data for the same entity get repeated in each different partition key?
 
   // --> Q1
   // -- events_by_date --
-  // local_date_time K
-  // event_id
-  // title
-  // org_id
-  // series_id
+  // local_date_time timestamp K
+  // event_id uuid
+  // title text
+  // org_id uuid
+  // series_id uuid
 
   // --> Q2
   // -- event_details_by_id --
-  // event_id K
-  // org_id
-  // series_id
+  // event_id uuid K
+  // org_id uuid
+  // series_id uuid
 
   // --> Q3
   // -- events_by_person --
-  // person_id K
-  // event_id
+  // person_id uuid K
+  // event_id uuid
 
   // --> Q4
   // -- events_by_organization --
-  // org_id K
-  // event_id
+  // org_id uuid K
+  // event_id uuid
 
   // --> Q5
   // -- events_by_day_of_week --
-  // day_of_week K
-  // series_interval C^
-  // event_id
-  // series_description
+  // day_of_week text K
+  // series_interval tinyint C^
+  // event_id uuid
+  // series_description text
 
   // --> Q5A
   // -- events_by_series_interval --
-  // series_interval K
-  // day_of_week C^
-  // event_id
-  // series_description
+  // series_interval tinyint K
+  // day_of_week text C^
+  // event_id uuid
+  // series_description text
 
   // --> Q9
   // -- person_by_org_name --
-  // org_name K
-  // person_id
-  // // TODO: or only the person_id ??
-  // first_name
-  // last_name
-  // identifier
-  // founder
-  // member
+  // org_name text K
+  // person_id uuid C^
+  // // TODO: or only the person_id ?? repetition of the data, probably
+  // first_name text
+  // last_name text
+  // identifier text
+  // founder boolean
+  // member boolean
 
   // --> Q9A
   // -- person_by_event --
-  // event_id K
-  // person_id C^
-  // first_name
-  // last_name
-  // identifier
+  // event_id uuid K
+  // person_id uuid C^
+  // org_id uuid
+
+  // --> Q9B
+  // -- person_by_id --
+  // person_id uuid K
+  // first_name text
+  // last_name text
+  // identifier text
 
   // --> Q13
   // -- org_by_person_founder --
-  // person_id K
-  // founder C^
-  // org_id
+  // person_id uuid K
+  // founder boolean C^
+  // org_id uuid
 
   // --> Q13A
   // -- org_by_person_member --
-  // person_id K
-  // member C^
-  // org_id
+  // person_id uuid K
+  // member boolean C^
+  // org_id uuid
+
+  // --> Q13B
+  // -- org_by_id --
+  // org_id uuid K
+  // org_name text
+  // org_private boolean
 
 // // console.time('event');
 // // // cassandra version
