@@ -5,6 +5,8 @@ CREATE KEYSPACE event
 
 use event;
 
+-- TODO: change the type of series_interval ... Cassandra-Driver assumes a JS Number type is a CQL double ...
+
 CREATE TABLE event.events_by_date (
   local_date_time timestamp,
   event_id uuid,
@@ -15,7 +17,7 @@ CREATE TABLE event.events_by_date (
   series_id uuid,
   series_description text,
   day_of_week text,
-  series_interval tinyint,
+  series_interval double,
   PRIMARY KEY (local_date_time)
 )
   WITH comment = 'Q1 view events by date'
@@ -31,7 +33,7 @@ CREATE TABLE event.event_details_by_id (
   series_id uuid,
   series_description text,
   day_of_week text,
-  series_interval tinyint,
+  series_interval double,
   PRIMARY KEY (event_id)
 )
   WITH comment = 'Q2 view event details by id'
@@ -39,6 +41,8 @@ CREATE TABLE event.event_details_by_id (
 
 CREATE TABLE event.events_by_person (
   person_id uuid,
+  first_name text,
+  last_name text,
   event_id uuid,
   title text,
   local_date_time timestamp,
@@ -48,7 +52,7 @@ CREATE TABLE event.events_by_person (
   series_id uuid,
   series_description text,
   day_of_week text,
-  series_interval tinyint,
+  series_interval double,
   PRIMARY KEY (person_id)
 )
   WITH comment = 'Q3 view events a particular person has attended / plans to attend'
@@ -59,13 +63,12 @@ CREATE TABLE event.events_by_organization (
   event_id uuid,
   title text,
   local_date_time timestamp,
-  org_id uuid,
   org_name text,
   org_private boolean,
   series_id uuid,
   series_description text,
   day_of_week text,
-  series_interval tinyint,
+  series_interval double,
   PRIMARY KEY (org_id)
 )
   WITH comment = 'Q4 view events an organization has created'
@@ -73,7 +76,7 @@ CREATE TABLE event.events_by_organization (
 
 CREATE TABLE event.events_by_day_of_week (
   day_of_week text,
-  series_interval tinyint,
+  series_interval double,
   event_id uuid,
   title text,
   local_date_time timestamp,
@@ -88,7 +91,7 @@ CREATE TABLE event.events_by_day_of_week (
 ;
 
 CREATE TABLE event.events_by_series_interval (
-  series_interval tinyint,
+  series_interval double,
   day_of_week text,
   event_id uuid,
   title text,
@@ -108,7 +111,6 @@ CREATE TABLE event.person_by_org_name (
   person_id uuid,
   first_name text,
   last_name text,
-  identifier text,
   org_id uuid,
   org_private boolean,
   founder boolean,
@@ -123,7 +125,6 @@ CREATE TABLE event.person_by_event (
   person_id uuid,
   first_name text,
   last_name text,
-  identifier text,
   org_id uuid,
   org_name text,
   org_private boolean,
@@ -138,7 +139,6 @@ CREATE TABLE event.person_by_id (
   person_id uuid,
   first_name text,
   last_name text,
-  identifier text,
   PRIMARY KEY (person_id)
 )
   WITH comment = 'Q9B view person by id'

@@ -1,5 +1,5 @@
 const faker = require('faker');
-// const db = require('./index-cassandra.js');
+const cassandraDB = require('./index-cassandra.js');
 const Event = require('./Event.js');
 const Org = require('./Org.js');
 const cassandra = require('cassandra-driver')
@@ -38,28 +38,60 @@ let eventSeries = () => {
 };
 
 const NUMBERS = {
-  EVENTS: 10000000, // target 10,000,000
+  // EVENTS: 10000000, // target 10,000,000
   ORGS: 1000, // target 1,000
-  PEOPLE: 1000 // target 1,000
-  // EVENTS: 100,
+  PEOPLE: 1000, // target 1,000
+  EVENTS: 100,
   // ORGS: 100,
   // PEOPLE: 100
 };
 
-// mysql version
-const generateSeries = (useMySQL = true, cb) => {
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// TODO: remove identifiers
+
+// TODO: make return values from util functions a consistent format ...
+
+const utils = {
+  makePerson() {
+    return {
+      first_name: faker.name.firstName(),
+      last_name: faker.name.lastName()
+    }
+  },
+
+  makeSeries() {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const ordinalList = ['1st', '2nd', '3rd'];
 
-  const args = [];
-  for (let i = 1; i <= 3; i++) {
-    const ordinal = ordinalList[i];
-    for (let j = 1; j <= 7; j++) {
-      const day_of_week = days[j];
-      args.push([`Every ${ordinal} ${day_of_week} of the month until May 2020`, day_of_week, i]);
+    const args = [];
+    for (let i = 1; i <= 3; i++) {
+      const ordinal = ordinalList[i];
+      for (let j = 1; j <= 7; j++) {
+        const day_of_week = days[j];
+        args.push([`Every ${ordinal} ${day_of_week} of the month until May 2020`, day_of_week, i]);
+      }
+    }
+
+    return args;
+  },
+
+  makeOrg() {
+    return {
+      org_name: faker.company.companyName(),
+      org_private: faker.random.number(1) === 0 ? true : false
+    }
+  },
+
+  makeEvent() {
+    return {
+      title: faker.company.catchPhrase(),
+      local_date_time: faker.date.between('2019-10-01', '2020-4-30')
     }
   }
+}
 
+// mysql version
+const generateSeries = (useMySQL = true, cb) => {
+  const args = utils.makeSeries();
   if (useMySQL) {
     let statement = `INSERT INTO series (series_description, day_of_week, series_interval) VALUES ?;`;
     db.query(statement, [args], (err, results, fields) => {
@@ -72,47 +104,95 @@ const generateSeries = (useMySQL = true, cb) => {
 
 };
 
-const generateOrg = (times, cb, count = 0) => {
+const generateOrg = (useMySQL = true, times, cb, count = 0) => {
   if (times === 0) {
     return cb(null, null);
   }
 
-  const args = [faker.company.companyName(), faker.random.number(1) === 0 ? true : false];
-  db.query('INSERT INTO org (org_name, org_private) VALUES (?, ?)', args, (err, results, fields) => {
-    if (err) throw err;
-    generateOrg(times - 1, cb, count + 1);
-  });
+  let args = utils.makeOrg();
+
+  if (useMySQL) {
+    args = [args.org_name, args.org_private];
+    db.query('INSERT INTO org (org_name, org_private) VALUES (?, ?)', args, (err, results, fields) => {
+      if (err) throw err;
+      generateOrg(useMySQL, times - 1, cb, count + 1);
+    });
+  } else {
+    // TODO:
+  }
 }
 
-const generatePerson = (times, cb) => {
+const generatePerson = (useMySQL = true, times, cb) => {
   if (times === 0) {
     return cb(null, null);
   }
 
-  const args = [faker.name.firstName(), faker.name.lastName()];
-  db.query('INSERT INTO person (first_name, last_name) VALUES (?, ?)', args, (err, results, fields) => {
-    if (err) throw err;
-    generatePerson(times - 1, cb);
-  });
+  const args = utils.makePerson();
+
+  if (useMySQL) {
+    args = [args.first_name, args.last_name];
+    db.query('INSERT INTO person (first_name, last_name) VALUES (?, ?)', args, (err, results, fields) => {
+      if (err) throw err;
+      generatePerson(useMySQL, times - 1, cb);
+    });
+  } else {
+    // TODO: ...
+  }
 }
 
-const generateEvent = (times, cb) => {
+const generateEvent = (useMySQL = true, times, cb) => {
   if (times === 0) { return cb(null, null); }
 
-  const args = [
-    faker.company.catchPhrase(),
-    faker.date.between('2019-10-01', '2020-4-30'),
-    faker.random.number({ min: 1, max: NUMBERS.ORGS }),
-    faker.random.number({ min: 1, max: 21 })
-  ];
-  const statement = `INSERT INTO event (title, local_date_time, org_id, series_id uuid) VALUES (?, ?, ?, ?);`;
-  db.query(statement, args, (err, results, fields) => {
-    if (err) throw err;
-    generateEvent(times - 1, cb);
-  })
+  let args = utils.makeEvent();
+  let statement;
+
+  if (useMySQL) {
+    args = [
+      args.title,
+      args.local_date_time,
+      faker.random.number({ min: 1, max: NUMBERS.ORGS }),
+      faker.random.number({ min: 1, max: 21 })
+    ];
+
+    statement = `INSERT INTO event (title, local_date_time, org_id, series_id uuid) VALUES (?, ?, ?, ?);`;
+    db.query(statement, args, (err, results, fields) => {
+      if (err) throw err;
+      generateEvent(useMySQL, times - 1, cb);
+    })
+  } else {
+    // TODO: seed other event tables in cassandra as well ...
+
+    const person = utils.makePerson();
+    const org = utils.makeOrg();
+    const series = utils.makeSeries() // this is an array of arrays
+
+    // TODO: will these uuid's line up with other uuid's for the same data in other tables??
+
+    args = [
+      Uuid.random(),
+      person.first_name,
+      person.last_name,
+      Uuid.random(),
+      args.title,
+      args.local_date_time,
+      Uuid.random(),
+      org.org_name,
+      org.org_private,
+      Uuid.random(),
+      series[0][0],
+      series[0][1],
+      series[0][2],
+    ];
+    statement = `INSERT INTO events_by_person (person_id, first_name, last_name, event_id, title, local_date_time, org_id, org_name, org_private, series_id, series_description, day_of_week, series_interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+      cassandraDB.execute(statement, args, (err, result) => {
+        if (err) { throw err; }
+        generateEvent(useMySQL, times - 1, cb);
+      })
+  }
 }
 
-const generateOrgPerson = (org_id = 1, person_id = 0, numFounders = 0, numMembers = 0, founder = false, member = false, cb) => {
+const generateOrgPerson = (useMySQL = true, org_id = 1, person_id = 0, numFounders = 0, numMembers = 0, founder = false, member = false, cb) => {
   if (person_id === NUMBERS.PEOPLE) {
     if (org_id === NUMBERS.ORGS) {
       // base case
@@ -144,7 +224,7 @@ const generateOrgPerson = (org_id = 1, person_id = 0, numFounders = 0, numMember
   db.query(`INSERT INTO org_person (org_id, person_id, founder, member) VALUES (?, ?, ?, ?);`, [org_id, person_id, founder, member], (err, results, fields) => {
     if (err) throw err;
     if (results.insertId === NUMBERS.ORGS * NUMBERS.PEOPLE) { cb(null, null); }
-    generateOrgPerson(org_id, person_id, numFounders, numMembers, founder, member, cb);
+    generateOrgPerson(useMySQL, org_id, person_id, numFounders, numMembers, founder, member, cb);
   });
 }
 
@@ -299,21 +379,21 @@ const cassandraNotes = {
 };
 
 const seed = (useMySQL = true) => {
-  if (useMySQl) {
+  if (useMySQL) {
     console.time('series');
-    generateSeries(() => {
+    generateSeries(useMySQL, () => {
       console.timeEnd('series');
       console.time('org');
-      generateOrg(NUMBERS.ORGS, () => {
+      generateOrg(useMySQL, NUMBERS.ORGS, () => {
         console.timeEnd('org');
         console.time('person');
-        generatePerson(NUMBERS.PEOPLE, () => {
+        generatePerson(useMySQL, NUMBERS.PEOPLE, () => {
           console.timeEnd('person');
           console.time('event');
-          generateEvent(NUMBERS.EVENTS, () => {
+          generateEvent(useMySQL, NUMBERS.EVENTS, () => {
             console.timeEnd('event');
             console.time('org_person');
-            generateOrgPerson(1, 0, 0, 0, false, false, () => {
+            generateOrgPerson(useMySQL, 1, 0, 0, 0, false, false, () => {
               console.timeEnd('org_person');
               console.log('finished seeding database!');
               db.end();
@@ -323,12 +403,16 @@ const seed = (useMySQL = true) => {
       });
     });
   } else {
-
+    console.time('event');
+    generateEvent(useMySQL, NUMBERS.EVENTS, () => {
+      console.timeEnd('event');
+      console.log('finished seeding database!');
+    })
   }
 }
 
-// seed(true); MySQL
-seed(false); Cassandra
+// seed(true); // MySQL
+seed(false); // Cassandra
 
 // // console.time('event');
 // // // cassandra version
