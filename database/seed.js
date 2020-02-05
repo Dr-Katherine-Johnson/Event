@@ -8,48 +8,16 @@ const Uuid = cassandra.types.Uuid;
 const db = require('./index-mysql.js');
 const mysql = require('mysql');
 
-// Given a maximum quantity max, returns an array of memberIds between 1 and max
-const memberIds = (max) => {
-  const ids = [];
-  const numberOfElements = faker.random.number({ min: 1, max });
-  for (let i = 0; i < numberOfElements; i += 1) {
-    const newId = `m${faker.random.number(499)}`; // changing this to have first_name and last_name with a unique id (ie, b/c member numbers could repeat ...)
-    ids.push(newId);
-  }
-  return ids;
-};
-// Each organization has between 1 and 4 founders and up to 50 members
-let orgMembers = () => {
-  return { founders: memberIds(4), group_members: memberIds(50) };
-};
-// some, but not all events might repeat
-let eventSeries = () => {
-  const repeat = faker.random.boolean();
-  const ordinals = ['1st', '2nd', '3rd'];
-  const frequency = {
-    day_of_week: faker.date.weekday(),
-    interval: faker.random.number(2),
-  };
-  const newSeries = {
-    description: `Every ${ordinals[frequency.interval]} ${frequency.day_of_week} of the month until May 2020`,
-    frequency,
-  };
-  return repeat ? newSeries : null;
-};
-
 const NUMBERS = {
-  // EVENTS: 10000000, // target 10,000,000
+  EVENTS: 10000000, // target 10,000,000
   ORGS: 1000, // target 1,000
   PEOPLE: 1000, // target 1,000
-  EVENTS: 100,
+  // EVENTS: 100,
   // ORGS: 100,
   // PEOPLE: 100
 };
 
-// TODO: remove identifiers
-
 // TODO: make return values from util functions a consistent format ...
-
 const utils = {
   makePerson() {
     return {
@@ -160,7 +128,7 @@ const generateEvent = (useMySQL = true, times, cb) => {
       generateEvent(useMySQL, times - 1, cb);
     })
   } else {
-    // TODO: seed other event tables in cassandra as well ...
+    // TODO: currently only seeding events_by_person ... seed other event tables in cassandra as well ...
 
     const person = utils.makePerson();
     const org = utils.makeOrg();
@@ -227,23 +195,6 @@ const generateOrgPerson = (useMySQL = true, org_id = 1, person_id = 0, numFounde
     generateOrgPerson(useMySQL, org_id, person_id, numFounders, numMembers, founder, member, cb);
   });
 }
-
-// const events = [];
-// const organizations = [];
-
-// //  events: {
-// //     eventId: Number (integer),
-// //     title: String,
-// //     local_date_time: ISO 8601,
-// //     orgId: String,
-// //     series: {
-// //       description: String,
-// //       frequency: {
-// //         day_of_week: String,
-// //         interval: Number,
-// //        },
-// //      },
-// //   }
 
 const cassandraNotes = {
   // TODO: cassandra questions
@@ -340,7 +291,6 @@ const cassandraNotes = {
   // // TODO: or only the person_id ?? repetition of the data, probably
   // first_name text
   // last_name text
-  // identifier text
   // founder boolean
   // member boolean
 
@@ -355,7 +305,6 @@ const cassandraNotes = {
   // person_id uuid K
   // first_name text
   // last_name text
-  // identifier text
 
   // --> Q13
   // -- org_by_person_founder --
@@ -405,7 +354,7 @@ const seed = (useMySQL = true) => {
   } else {
     console.time('event');
     generateEvent(useMySQL, NUMBERS.EVENTS, () => {
-      console.timeEnd('event');
+      console.timeEnd('event'); // takes about 8min to seed 10M events_by_date records on laptop
       console.log('finished seeding database!');
     })
   }
@@ -413,73 +362,3 @@ const seed = (useMySQL = true) => {
 
 // seed(true); // MySQL
 seed(false); // Cassandra
-
-// // console.time('event');
-// // // cassandra version
-// // let generateEvents = (times) => {
-// //   if (times === 0) { return console.timeEnd('event'); }
-// //   const event = {
-// //     event_id: Uuid.random(),
-// //     title: faker.company.catchPhrase(),
-// //     local_date_time: faker.date.between('2019-10-01', '2020-4-30'),
-// //     org_id: Uuid.random(),
-// //     series: Uuid.random(),
-// //   };
-// //   Event.insert(event)
-// //     .then(result => {
-// //       // console.count();
-// //       generateEvents(times - 1);
-// //     })
-// //     .catch(err => {
-// //       console.log(err);
-// //     })
-// // };
-
-// // Org =
-// // {
-// //  orgId: Number(integer),
-// //  org_name: String,
-// //  org_private: boolean,
-// //  members: {
-// //    founders: [ memberId, otherMemberId, …],
-// //    group_members: [ memberId, otherMemberId , …],
-// //  }
-
-// // // There are usually less organizations than there are events
-// // // Or, in other words, each organization can hold multiple events, of which there are 100
-// // // With 20 events distributed evenly that is an average of 5 events per org
-// // let generateOrgs = () => {
-// //   for (let i = 0; i < 20; i += 1) {
-// //     organizations.push({
-// //       orgId: `o${i}`,
-// //       org_name: faker.company.companyName(),
-// //       org_private: faker.random.boolean(),
-// //       members: orgMembers(),
-// //     });
-// //   }
-// // };
-
-// // generateOrgs();
-// // generateEvents();
-
-// // module.exports.organizations = organizations;
-// // module.exports.events = events;
-
-// // const insertSampleEventsAndOrgs = () => {
-// //   console.time('org');
-// //   Org.create(organizations)
-// //     .then((results) => {
-// //       console.timeEnd('org');
-// //       console.log('orgs seeded');
-// //       console.time('event');
-// //       return Event.create(events);
-// //     })
-// //     .then((results) => {
-// //       console.log('NUMBER_OF_EVENTS: ', NUMBER_OF_EVENTS);
-// //       console.timeEnd('event');
-// //       console.log('events seeded');
-// //       console.log('finished seeding database!');
-// //       db.close();
-// //     });
-// // };
-// // insertSampleEventsAndOrgs();
