@@ -9,10 +9,10 @@ const db = require('./index-mysql.js');
 const mysql = require('mysql');
 
 const NUMBERS = {
-  EVENTS: 10000000, // target 10,000,000
+  // EVENTS: 10000000, // target 10,000,000
   ORGS: 1000, // target 1,000
   PEOPLE: 1000, // target 1,000
-  // EVENTS: 100,
+  EVENTS: 100,
   // ORGS: 100,
   // PEOPLE: 100
 };
@@ -87,6 +87,11 @@ const generateOrg = (useMySQL = true, times, cb, count = 0) => {
     });
   } else {
     // TODO:
+    // need to get a list from the db of all the
+      // org_id
+      // org_name
+      // org_private
+    // to ensure that they are the same values when we add person and founder / member details
   }
 }
 
@@ -128,7 +133,10 @@ const generateEvent = (useMySQL = true, times, cb) => {
       generateEvent(useMySQL, times - 1, cb);
     })
   } else {
-    // TODO: currently only seeding events_by_person ... seed other event tables in cassandra as well ...
+    // TODO: currently only seeding event_by_id ... also need to seed org_by_id
+    // person.first_name,
+    // person.last_name,
+    // Uuid.random(),
 
     const person = utils.makePerson();
     const org = utils.makeOrg();
@@ -138,12 +146,10 @@ const generateEvent = (useMySQL = true, times, cb) => {
 
     args = [
       Uuid.random(),
-      person.first_name,
-      person.last_name,
-      Uuid.random(),
       args.title,
       args.local_date_time,
-      Uuid.random(),
+      orgUuids[Math.floor(Math.random() * 1000000)],
+      // Uuid.random(),
       org.org_name,
       org.org_private,
       Uuid.random(),
@@ -151,7 +157,7 @@ const generateEvent = (useMySQL = true, times, cb) => {
       series[0][1],
       series[0][2],
     ];
-    statement = `INSERT INTO events_by_person (person_id, first_name, last_name, event_id, title, local_date_time, org_id, org_name, org_private, series_id, series_description, day_of_week, series_interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    statement = `INSERT INTO event_by_id (event_id, title, local_date_time, org_id, org_name, org_private, series_id, series_description, day_of_week, series_interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       cassandraDB.execute(statement, args, (err, result) => {
         if (err) { throw err; }
@@ -352,9 +358,19 @@ const seed = (useMySQL = true) => {
       });
     });
   } else {
-    console.time('event');
+    // TODO: does this ensure that I now have 1 million uuid's that won't be used for anything else?
+    const orgUuids = []
+    for (let i = 0; i < NUMBERS.ORGS; i++) {
+      orgUuids.push(Uuid.random());
+    }
+
+    // TWO main queries for Cassandra
+      // event_by_id
+      // org_by_id
+
+    console.time('event_by_id');
     generateEvent(useMySQL, NUMBERS.EVENTS, () => {
-      console.timeEnd('event'); // takes about 8min to seed 10M events_by_date records on laptop
+      console.timeEnd('event_by_id'); // takes about 8min to seed 10M records on laptop
       console.log('finished seeding database!');
     })
   }
