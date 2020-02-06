@@ -20,11 +20,13 @@ const NUMBERS = {
 // TODO: make return values from util functions a consistent format ...
 const utils = {
   makePerson() {
+    // TODO: improvement, cap each organization at 50 members and 4 founders
+    const member = faker.random.boolean();
     return {
       first_name: faker.name.firstName(),
       last_name: faker.name.lastName(), // TODO: fix how the member and founder interacts with each event / org ... currently quite wrong ... either member should be true, OR both member and founder should be true, or member should be false and founder should be true
-      member: faker.random.boolean(), // TODO: improvement, cap each organization at 50 members and 4 founders
-      founder: faker.random.boolean()
+      member,
+      founder: member ? faker.random.boolean() : true
     }
   },
 
