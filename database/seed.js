@@ -12,7 +12,7 @@ const NUMBERS = {
   // EVENTS: 10000000, // target 10,000,000
   ORGS: 1000, // target 1,000
   PEOPLE: 1000, // target 1,000
-  EVENTS: 100,
+  EVENTS: 1000000,
   // ORGS: 100,
   // PEOPLE: 100
 };
@@ -24,7 +24,7 @@ const utils = {
     const member = faker.random.boolean();
     return {
       first_name: faker.name.firstName(),
-      last_name: faker.name.lastName(), // TODO: fix how the member and founder interacts with each event / org ... currently quite wrong ... either member should be true, OR both member and founder should be true, or member should be false and founder should be true
+      last_name: faker.name.lastName(),
       member,
       founder: member ? faker.random.boolean() : true
     }
@@ -71,7 +71,7 @@ const generateSeries = (useMySQL = true, cb) => {
       cb(null, results);
     });
   } else {
-    // TODO ...
+    // for additional cassandra queries
   }
 
 };
@@ -90,12 +90,7 @@ const generateOrg = (useMySQL = true, times, cb, count = 0) => {
       generateOrg(useMySQL, times - 1, cb, count + 1);
     });
   } else {
-    // TODO:
-    // need to get a list from the db of all the
-      // org_id
-      // org_name
-      // org_private
-    // to ensure that they are the same values when we add person and founder / member details
+    // for additional cassandra queries
   }
 }
 
@@ -113,15 +108,15 @@ const generatePerson = (useMySQL = true, times, cb) => {
       generatePerson(useMySQL, times - 1, cb);
     });
   } else {
-    // TODO: ...
+    // for additional cassandra queries
   }
 }
 
 const generateEvent = (useMySQL = true, times, options = {
-  sameEvent: false,
   eventUuid: Uuid.random(),
   personsToAdd: 5,
   personIndices: {},
+  personI: 0,
   orgI: Math.floor(Math.random() * 1000),
   seriesI: Math.floor(Math.random() * 21),
   eventDetails: utils.makeEvent()
@@ -146,58 +141,85 @@ const generateEvent = (useMySQL = true, times, options = {
   } else {
     // event_by_id is the one Cassandra table needed
     const series = utils.makeSeries() // an array of arrays
-    let personI = Math.floor(Math.random() * 1000);
+    let concurrentInsertions = [];
 
-    if (options.personsToAdd > 0) {
-      // we're adding another person to the event, so use the same eventUuid, event details, org uuid and details, and series details
+    while (options.personsToAdd > 0) {
 
-      options.sameEvent = true;
-
-      while (options.personIndices[personI]) {
+      // this section prepares options.personsToAdd number of insert queries that will run concurrently for the same event, with only person details being different
+      options.personI = Math.floor(Math.random() * 1000);
+      while (options.personIndices[options.personI]) {
         // generate random person indexes until we have one that is NOT in personIndices for this event
-        personI = Math.floor(Math.random() * 1000)
+        options.personI = Math.floor(Math.random() * 1000)
       }
       // add the index of the person we just selected to personIndices
-      options.personIndices[personI] = true;
+      options.personIndices[options.personI] = true;
       options.personsToAdd = options.personsToAdd - 1;
-    } else {
-      // new event, so reset options
-      options = {
-        sameEvent: false,
-        eventUuid: Uuid.random(),
-        personsToAdd: Math.floor(Math.random() * 50) + 1, // causes each new event to recurse an additional random number of times between 1 and 50
-        personIndices: {},
-        orgI: Math.floor(Math.random() * 1000),
-        seriesI: Math.floor(Math.random() * 21),
-        eventDetails: utils.makeEvent()
-      };
 
-      // add the index of the person we selected earlier to personIndices
-      options.personIndices[personI] = true;
+      args = [
+        options.eventUuid,
+        persons[options.personI].uuid,
+        options.eventDetails.title,
+        options.eventDetails.local_date_time,
+        orgs[options.orgI].uuid,
+        orgs[options.orgI].org_name,
+        orgs[options.orgI].org_private,
+        seriesUuids[options.seriesI],
+        series[options.seriesI][0],
+        series[options.seriesI][1],
+        series[options.seriesI][2],
+        persons[options.personI].first_name,
+        persons[options.personI].last_name,
+        persons[options.personI].founder,
+        persons[options.personI].member,
+      ];
+      statement = `INSERT INTO event_by_id (event_id, person_id, title, local_date_time, org_id, org_name, org_private, series_id, series_description, day_of_week, series_interval, first_name, last_name, founder, member) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+      concurrentInsertions.push(cassandraDB.execute(statement, args));
     }
 
-    args = [
-      options.eventUuid,
-      persons[personI].uuid,
-      options.eventDetails.title,
-      options.eventDetails.local_date_time,
-      orgs[options.orgI].uuid,
-      orgs[options.orgI].org_name,
-      orgs[options.orgI].org_private,
-      seriesUuids[options.seriesI],
-      series[options.seriesI][0],
-      series[options.seriesI][1],
-      series[options.seriesI][2],
-      persons[personI].first_name,
-      persons[personI].last_name,
-      persons[personI].founder,
-      persons[personI].member,
-    ];
-    statement = `INSERT INTO event_by_id (event_id, person_id, title, local_date_time, org_id, org_name, org_private, series_id, series_description, day_of_week, series_interval, first_name, last_name, founder, member) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    // once all the insertions for that one event have finished, move on to a different event
+    Promise.all(concurrentInsertions)
+      .then(() => {
+        // new event, so reset options
+        options = {
+          eventUuid: Uuid.random(),
+          personsToAdd: Math.floor(Math.random() * 50) + 1,
+          personIndices: {},
+          personI: Math.floor(Math.random() * 1000),
+          orgI: Math.floor(Math.random() * 1000),
+          seriesI: Math.floor(Math.random() * 21),
+          eventDetails: utils.makeEvent()
+        };
 
-      cassandraDB.execute(statement, args, (err, result) => {
-        if (err) { throw err; }
-        generateEvent(useMySQL, options.sameEvent ? times : times - 1, options, cb);
+        // add the index of the 1 person for this new event to personIndices
+        options.personIndices[options.personI] = true;
+
+        args = [
+          options.eventUuid,
+          persons[options.personI].uuid,
+          options.eventDetails.title,
+          options.eventDetails.local_date_time,
+          orgs[options.orgI].uuid,
+          orgs[options.orgI].org_name,
+          orgs[options.orgI].org_private,
+          seriesUuids[options.seriesI],
+          series[options.seriesI][0],
+          series[options.seriesI][1],
+          series[options.seriesI][2],
+          persons[options.personI].first_name,
+          persons[options.personI].last_name,
+          persons[options.personI].founder,
+          persons[options.personI].member,
+        ];
+        statement = `INSERT INTO event_by_id (event_id, person_id, title, local_date_time, org_id, org_name, org_private, series_id, series_description, day_of_week, series_interval, first_name, last_name, founder, member) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+          cassandraDB.execute(statement, args, (err, result) => {
+            if (err) { throw err; }
+            generateEvent(useMySQL, times - 1, options, cb);
+          })
+      })
+      .catch((err) => {
+        throw err;
       })
   }
 }
@@ -239,16 +261,33 @@ const generateOrgPerson = (useMySQL = true, org_id = 1, person_id = 0, numFounde
 }
 
 const cassandraNotes = {
-  // TODO: cassandra questions
-  // how does denormalized data stay in sync with other denormalized data??
+  // Main Query
+  // Q1A event by event id
 
-  // TODO: also, when seeding, how do I ensure that the duplicated data between cassandra tables has the same relationship in every table that it appears in. ie, the same event belongs to the same organization and has the same series in all the tables that have that event, whether querying by_date, by_id, by_person, etc ...
+  // --> Q1A
+  // -- event_details_by_id --
+  // event_id uuid K
+  // person_id uuid C^
+  // title text
+  // local_date_time timestamp
+  // org_id uuid
+  // org_name text
+  // org_private boolean
+  // series_id uuid
+  // series_description text
+  // day_of_week text
+  // series_interval double
+  // first_name text
+  // last_name text
+  // founder boolean
+  // member boolean
 
-  // common queries
+  // Cassandra verbiage is misleading, they're more like objects, and less like SQL tables ...
+
+  // OPTION1: Troy did this >>> generating data into a csv and then copying the CSV into cassandra
+
+  // other common queries
   // Q1 view events by date or date range
-  // Q2 view details about a given event,
-    // its organization details
-    // series details (time frequency)
   // Q3 view events a particular person has attended / plans to attend
   // Q4 view events an organization has created
   // Q5 view events by day_of_week
@@ -280,25 +319,11 @@ const cassandraNotes = {
   // Q15 update a person
   // Q16 delete a person
 
-  // THEY'RE OBJECTS!
-
-  // OPTION1: Troy did this >>> generating data into a csv and then copying the CSV into cassandra
-
-  // TODO: create Chebotko logical data models to support these queries
-
-  // TODO: should the org_id, series_id uuid, person_id key's be replaced with data from their various Cassandra columns in their respective Cassandra tables in CQL? or should the same data for the same entity get repeated in each different partition key?
-
   // --> Q1
   // -- events_by_date --
   // local_date_time timestamp K
   // event_id uuid
   // title text
-  // org_id uuid
-  // series_id uuid
-
-  // --> Q2
-  // -- event_details_by_id --
-  // event_id uuid K
   // org_id uuid
   // series_id uuid
 
@@ -365,8 +390,6 @@ const cassandraNotes = {
   // org_id uuid K
   // org_name text
   // org_private boolean
-
-  // TODO: add tables for series by id ??
 };
 
 const orgs = [];
@@ -398,7 +421,7 @@ const seed = (useMySQL = true) => {
       });
     });
   } else {
-    // TODO: does this ensure that I now have 1,000 uuid's each for org_id & person_id that won't be used for anything else?
+    // TODO: does this ensure that I now have 1000 uuid's each for org_id & person_id that won't be used for anything else?
 
     for (let i = 0; i < NUMBERS.ORGS; i++) {
       orgs.push(Object.assign({}, utils.makeOrg(), { uuid: Uuid.random()}));
@@ -408,15 +431,11 @@ const seed = (useMySQL = true) => {
     for (let i = 0; i < 21; i++) {
       seriesUuids.push(Uuid.random());
     }
-
-    // TWO main queries for Cassandra
-      // event_by_id
-      // org_by_id
-
     console.time('event_by_id');
     generateEvent(useMySQL, NUMBERS.EVENTS, {}, () => {
-      console.timeEnd('event_by_id'); // takes about 8min to seed 10M records on laptop
-      console.log('finished seeding database!');
+      console.timeEnd('event_by_id');
+      console.log(`seeded ${NUMBERS.EVENTS} events`);
+      cassandraDB.shutdown();
     })
   }
 }

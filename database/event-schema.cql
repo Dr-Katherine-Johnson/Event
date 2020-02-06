@@ -1,14 +1,14 @@
-DROP KEYSPACE IF EXISTS event;
+DROP KEYSPACE IF EXISTS events;
 
-CREATE KEYSPACE event
+CREATE KEYSPACE events
   WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 3};
 
-use event;
+use events;
 
--- TODO: change the type of series_interval ... Cassandra-Driver assumes a JS Number type is a CQL double ...
+-- TODO: improvement: change the type of series_interval ... Cassandra-Driver assumes a JS Number type is a CQL double ...
 
 -- 1 main query
-CREATE TABLE event.event_by_id (
+CREATE TABLE events.event_by_id (
   event_id uuid,
   person_id uuid,
   title text,
