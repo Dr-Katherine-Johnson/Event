@@ -7,7 +7,7 @@ use event;
 
 -- TODO: change the type of series_interval ... Cassandra-Driver assumes a JS Number type is a CQL double ...
 
--- 2 main queries
+-- 1 main query
 CREATE TABLE event.event_by_id (
   event_id uuid,
   person_id uuid,
@@ -29,21 +29,21 @@ CREATE TABLE event.event_by_id (
   WITH comment = 'Q2 view event details by id'
 ;
 
-CREATE TABLE event.org_by_id (
-  org_id uuid,
-  person_id uuid,
-  org_name text,
-  org_private boolean,
-  first_name text,
-  last_name text,
-  founder boolean,
-  member boolean,
-  PRIMARY KEY ((org_id), person_id)
-)
-  WITH comment = 'Q13B view org details by id'
-;
-
 -- unneeded queries?
+
+-- CREATE TABLE event.org_by_id (
+--   org_id uuid,
+--   person_id uuid,
+--   org_name text,
+--   org_private boolean,
+--   first_name text,
+--   last_name text,
+--   founder boolean,
+--   member boolean,
+--   PRIMARY KEY ((org_id), person_id)
+-- )
+--   WITH comment = 'Q13B view org details by id'
+-- ;
 
 -- CREATE TABLE event.events_by_date (
 --   local_date_time timestamp,

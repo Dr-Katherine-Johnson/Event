@@ -115,16 +115,23 @@ const generatePerson = (useMySQL = true, times, cb) => {
   }
 }
 
-const generateEvent = (useMySQL = true, times, options = { sameEvent: false, persons: []}, cb) => {
+const generateEvent = (useMySQL = true, times, options = {
+  sameEvent: false,
+  eventUuid: Uuid.random(),
+  personsToAdd: 5,
+  personIndices: {},
+  orgI: Math.floor(Math.random() * 1000),
+  seriesI: Math.floor(Math.random() * 21),
+  eventDetails: utils.makeEvent()
+}, cb) => {
   if (times === 0) { return cb(null, null); }
 
-  let args = utils.makeEvent();
   let statement;
 
   if (useMySQL) {
     args = [
-      args.title,
-      args.local_date_time,
+      eventDetails.title,
+      eventDetails.local_date_time,
       faker.random.number({ min: 1, max: NUMBERS.ORGS }),
       faker.random.number({ min: 1, max: 21 })
     ];
@@ -135,55 +142,50 @@ const generateEvent = (useMySQL = true, times, options = { sameEvent: false, per
       generateEvent(useMySQL, times - 1, {}, cb);
     })
   } else {
-    // TODO: currently only seeding event_by_id ... also need to seed org_by_id ???
-
-    const series = utils.makeSeries() // this is an array of arrays
+    // event_by_id is the one Cassandra table needed
+    const series = utils.makeSeries() // an array of arrays
     let personI = Math.floor(Math.random() * 1000);
-    let orgI = Math.floor(Math.random() * 1000);
-    let seriesI = Math.floor(Math.random() * 21);
 
-    // TODO: will these uuid's line up with other uuid's for the same data in other tables??
-    if (personsToAdd > 0) {
-      // set flag sameEvent to true
+    if (options.personsToAdd > 0) {
+      // we're adding another person to the event, so use the same eventUuid, event details, org uuid and details, and series details
+
       options.sameEvent = true;
-      // use the same eventUuid, ie, we're adding another person to the event
+
+      while (options.personIndices[personI]) {
+        // generate random person indexes until we have one that is NOT in personIndices for this event
+        personI = Math.floor(Math.random() * 1000)
+      }
+      // add the index of the person we just selected to personIndices
+      options.personIndices[personI] = true;
+      options.personsToAdd = options.personsToAdd - 1;
     } else {
-      // set flag sameEvent to false
-      options.sameEvent = false;
-      // new event
-      // create a new eventUuid
-      options.eventUuid = Uuid.random();
-      // reset personsToAdd to a new number
-      options.personsToAdd = Math.floor(Math.random() * 50)
-      // reset personIndices to a blank object
-      options.personIndices = {};
+      // new event, so reset options
+      options = {
+        sameEvent: false,
+        eventUuid: Uuid.random(),
+        personsToAdd: Math.floor(Math.random() * 50) + 1, // causes each new event to recurse an additional random number of times between 1 and 50
+        personIndices: {},
+        orgI: Math.floor(Math.random() * 1000),
+        seriesI: Math.floor(Math.random() * 21),
+        eventDetails: utils.makeEvent()
+      };
+
+      // add the index of the person we selected earlier to personIndices
+      options.personIndices[personI] = true;
     }
-
-    // {
-    //   sameEvent: false,
-    //   personsToAdd: 0 - 50,
-    //   personIndices: { 0: false, 1: true, 2: false, 3: true, etc...}
-    // }
-
-    // for each event that gets created
-      // recurse an additional, random, number of times between 0 and 50
-        // create numPersons
-        // the only fields that are different are
-          // person_id, first_name, last_name, founder, member
-          // can't use any of the other person objects that were already used on this event
 
     args = [
       options.eventUuid,
       persons[personI].uuid,
-      args.title,
-      args.local_date_time,
-      orgs[orgI].uuid,
-      orgs[orgI].org_name,
-      orgs[orgI].org_private,
-      seriesUuids[seriesI],
-      series[seriesI][0],
-      series[seriesI][1],
-      series[seriesI][2],
+      options.eventDetails.title,
+      options.eventDetails.local_date_time,
+      orgs[options.orgI].uuid,
+      orgs[options.orgI].org_name,
+      orgs[options.orgI].org_private,
+      seriesUuids[options.seriesI],
+      series[options.seriesI][0],
+      series[options.seriesI][1],
+      series[options.seriesI][2],
       persons[personI].first_name,
       persons[personI].last_name,
       persons[personI].founder,
