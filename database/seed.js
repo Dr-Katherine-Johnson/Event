@@ -22,13 +22,15 @@ const utils = {
   makePerson() {
     return {
       first_name: faker.name.firstName(),
-      last_name: faker.name.lastName()
+      last_name: faker.name.lastName(), // TODO: fix how the member and founder interacts with each event / org ... currently quite wrong ... either member should be true, OR both member and founder should be true, or member should be false and founder should be true
+      member: faker.random.boolean(), // TODO: improvement, cap each organization at 50 members and 4 founders
+      founder: faker.random.boolean()
     }
   },
 
   makeSeries() {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const ordinalList = ['1st', '2nd', '3rd'];
+    const days = [null, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const ordinalList = [null, '1st', '2nd', '3rd'];
 
     const args = [];
     for (let i = 1; i <= 3; i++) {
@@ -113,7 +115,7 @@ const generatePerson = (useMySQL = true, times, cb) => {
   }
 }
 
-const generateEvent = (useMySQL = true, times, cb) => {
+const generateEvent = (useMySQL = true, times, options = { sameEvent: false, persons: []}, cb) => {
   if (times === 0) { return cb(null, null); }
 
   let args = utils.makeEvent();
@@ -130,38 +132,68 @@ const generateEvent = (useMySQL = true, times, cb) => {
     statement = `INSERT INTO event (title, local_date_time, org_id, series_id uuid) VALUES (?, ?, ?, ?);`;
     db.query(statement, args, (err, results, fields) => {
       if (err) throw err;
-      generateEvent(useMySQL, times - 1, cb);
+      generateEvent(useMySQL, times - 1, {}, cb);
     })
   } else {
-    // TODO: currently only seeding event_by_id ... also need to seed org_by_id
-    // person.first_name,
-    // person.last_name,
-    // Uuid.random(),
+    // TODO: currently only seeding event_by_id ... also need to seed org_by_id ???
 
-    const person = utils.makePerson();
-    const org = utils.makeOrg();
     const series = utils.makeSeries() // this is an array of arrays
+    let personI = Math.floor(Math.random() * 1000);
+    let orgI = Math.floor(Math.random() * 1000);
+    let seriesI = Math.floor(Math.random() * 21);
 
     // TODO: will these uuid's line up with other uuid's for the same data in other tables??
+    if (personsToAdd > 0) {
+      // set flag sameEvent to true
+      options.sameEvent = true;
+      // use the same eventUuid, ie, we're adding another person to the event
+    } else {
+      // set flag sameEvent to false
+      options.sameEvent = false;
+      // new event
+      // create a new eventUuid
+      options.eventUuid = Uuid.random();
+      // reset personsToAdd to a new number
+      options.personsToAdd = Math.floor(Math.random() * 50)
+      // reset personIndices to a blank object
+      options.personIndices = {};
+    }
+
+    // {
+    //   sameEvent: false,
+    //   personsToAdd: 0 - 50,
+    //   personIndices: { 0: false, 1: true, 2: false, 3: true, etc...}
+    // }
+
+    // for each event that gets created
+      // recurse an additional, random, number of times between 0 and 50
+        // create numPersons
+        // the only fields that are different are
+          // person_id, first_name, last_name, founder, member
+          // can't use any of the other person objects that were already used on this event
 
     args = [
-      Uuid.random(),
+      options.eventUuid,
+      persons[personI].uuid,
       args.title,
       args.local_date_time,
-      orgUuids[Math.floor(Math.random() * 1000000)],
-      // Uuid.random(),
-      org.org_name,
-      org.org_private,
-      Uuid.random(),
-      series[0][0],
-      series[0][1],
-      series[0][2],
+      orgs[orgI].uuid,
+      orgs[orgI].org_name,
+      orgs[orgI].org_private,
+      seriesUuids[seriesI],
+      series[seriesI][0],
+      series[seriesI][1],
+      series[seriesI][2],
+      persons[personI].first_name,
+      persons[personI].last_name,
+      persons[personI].founder,
+      persons[personI].member,
     ];
-    statement = `INSERT INTO event_by_id (event_id, title, local_date_time, org_id, org_name, org_private, series_id, series_description, day_of_week, series_interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    statement = `INSERT INTO event_by_id (event_id, person_id, title, local_date_time, org_id, org_name, org_private, series_id, series_description, day_of_week, series_interval, first_name, last_name, founder, member) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       cassandraDB.execute(statement, args, (err, result) => {
         if (err) { throw err; }
-        generateEvent(useMySQL, times - 1, cb);
+        generateEvent(useMySQL, options.sameEvent ? times : times - 1, options, cb);
       })
   }
 }
@@ -333,6 +365,10 @@ const cassandraNotes = {
   // TODO: add tables for series by id ??
 };
 
+const orgs = [];
+const persons = [];
+const seriesUuids = [];
+
 const seed = (useMySQL = true) => {
   if (useMySQL) {
     console.time('series');
@@ -345,7 +381,7 @@ const seed = (useMySQL = true) => {
         generatePerson(useMySQL, NUMBERS.PEOPLE, () => {
           console.timeEnd('person');
           console.time('event');
-          generateEvent(useMySQL, NUMBERS.EVENTS, () => {
+          generateEvent(useMySQL, NUMBERS.EVENTS, {}, () => {
             console.timeEnd('event');
             console.time('org_person');
             generateOrgPerson(useMySQL, 1, 0, 0, 0, false, false, () => {
@@ -358,10 +394,15 @@ const seed = (useMySQL = true) => {
       });
     });
   } else {
-    // TODO: does this ensure that I now have 1 million uuid's that won't be used for anything else?
-    const orgUuids = []
+    // TODO: does this ensure that I now have 1,000 uuid's each for org_id & person_id that won't be used for anything else?
+
     for (let i = 0; i < NUMBERS.ORGS; i++) {
-      orgUuids.push(Uuid.random());
+      orgs.push(Object.assign({}, utils.makeOrg(), { uuid: Uuid.random()}));
+      persons.push(Object.assign({}, utils.makePerson(), { uuid: Uuid.random()}));
+    }
+
+    for (let i = 0; i < 21; i++) {
+      seriesUuids.push(Uuid.random());
     }
 
     // TWO main queries for Cassandra
@@ -369,7 +410,7 @@ const seed = (useMySQL = true) => {
       // org_by_id
 
     console.time('event_by_id');
-    generateEvent(useMySQL, NUMBERS.EVENTS, () => {
+    generateEvent(useMySQL, NUMBERS.EVENTS, {}, () => {
       console.timeEnd('event_by_id'); // takes about 8min to seed 10M records on laptop
       console.log('finished seeding database!');
     })

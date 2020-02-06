@@ -10,6 +10,7 @@ use event;
 -- 2 main queries
 CREATE TABLE event.event_by_id (
   event_id uuid,
+  person_id uuid,
   title text,
   local_date_time timestamp,
   org_id uuid,
@@ -19,7 +20,11 @@ CREATE TABLE event.event_by_id (
   series_description text,
   day_of_week text,
   series_interval double,
-  PRIMARY KEY (event_id)
+  first_name text,
+  last_name text,
+  founder boolean,
+  member boolean,
+  PRIMARY KEY ((event_id), person_id)
 )
   WITH comment = 'Q2 view event details by id'
 ;
