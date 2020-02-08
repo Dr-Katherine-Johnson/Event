@@ -9,10 +9,10 @@ const db = require('./index-mysql.js');
 const mysql = require('mysql');
 
 const NUMBERS = {
-  // EVENTS: 10000000, // target 10,000,000
+  EVENTS: 10000000, // target 10,000,000
   ORGS: 1000, // target 1,000
   PEOPLE: 1000, // target 1,000
-  EVENTS: 1000000,
+  // EVENTS: 1000,
   // ORGS: 100,
   // PEOPLE: 100
 };
@@ -215,6 +215,7 @@ const generateEvent = (useMySQL = true, times, options = {
 
           cassandraDB.execute(statement, args, (err, result) => {
             if (err) { throw err; }
+            console.log(`${times} more events to seed`);
             generateEvent(useMySQL, times - 1, options, cb);
           })
       })
@@ -440,5 +441,5 @@ const seed = (useMySQL = true) => {
   }
 }
 
-// seed(true); // MySQL
-seed(false); // Cassandra
+seed(true); // MySQL
+// seed(false); // Cassandra
