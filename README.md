@@ -67,9 +67,10 @@ GET /event/:eventId
 
 ```json
 {
+  "id": "NUMBER",
   "title": "STRING",
   "org_name": "STRING",
-  "org_private": "boolean",
+  "org_private": "BOOLEAN",
   "local_date_time": "STRING", // (in ISO 8601 format)
   "orgId": "STRING",
 }
@@ -78,6 +79,7 @@ GET /event/:eventId
 Example:
 ```json
 {
+  "id": 56,
   "title": "Adaptive dedicated Graphic Interface",
   "org_name": "Eichmann - Hoeger",
   "org_private": true,
