@@ -9,60 +9,15 @@ const errorBody = {
 
 module.exports = {
   getEvent(req, res, next) {
-    // // GET /event/:eventId
-    // {
-    //   "title": "STRING",
-    //   "org_name": "STRING",
-    //   "org_private": "boolean",
-    //   "local_date_time": "STRING", // (in ISO 8601 format)
-    //   "orgId": "STRING",
-    // }
-
-    // TODO: refactor tests
     // MySQL version
-    const statement = `
-    SELECT event.id, event.title, event.local_date_time, event.org_id, org.org_name, org.org_private
-      FROM event
-      INNER JOIN org
-        ON event.org_id=org.id
-      WHERE
-        event.id=?
-    ;`
+    const statement = `SELECT event.id, event.title, event.local_date_time, event.org_id, org.org_name, org.org_private FROM event INNER JOIN org ON event.org_id=org.id WHERE event.id=?;`
     const args = [req.params.eventId];
     db.query(statement, args, (error, results, fields) => {
       if (error) {
-        res.status(500).send();
-        console.log(error);
+        return res.status(500).send();
       }
       res.status(200).json(results[0]);
     });
-
-
-
-    // // MongoDB version
-    // const eventData = {
-    //   org_private: false,
-    // };
-    // return Event.findOne({ eventId: req.params.eventId })
-    //   .then((event) => {
-    //     if (event === null) {
-    //       res.status(404).json(errorBody);
-    //     } else {
-    //       eventData.title = event.title;
-    //       eventData.local_date_time = event.local_date_time;
-    //       return Org.findOne({ orgId: event.orgId }, 'org_name org_private')
-    //         .then((org) => {
-    //           eventData.org_name = org.org_name;
-    //           eventData.org_private = org.org_private;
-    //           eventData.orgId = event.orgId;
-    //           res.status(200).json(eventData);
-    //         });
-    //     }
-    //   })
-    //   .catch(err => {
-    //     console.log(err);
-    //     res.status(500).send(); // this should only happen if there's a db error of some kind. Purposefully logging it on the server, but NOT transmitting it to the client, for security reasons. Same thing for the catch blocks on update & delete.
-    //   })
   },
 
   addEvent(req, res, next) {

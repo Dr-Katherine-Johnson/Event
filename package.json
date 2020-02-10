@@ -20,7 +20,7 @@
     "bb >= 10"
   ],
   "scripts": {
-    "test": "jest",
+    "test": "jest ./spec/controller/controller.test.js",
     "db-cassandra:seed": "cqlsh -f ./database/event-schema.cql && node ./database/seed.js && exit 0",
     "db-mysql:seed": "mysql -u root < ./database/mysql-schema.sql && node ./database/seed.js && exit 0",
     "build:dev": "webpack -d --watch",

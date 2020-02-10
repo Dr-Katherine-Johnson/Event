@@ -6,6 +6,7 @@ const controller = require('../../server/controller.js');
 const { mockReq, mockRes } = require('sinon-express-mock');
 const Event = require('../../database/Event.js');
 const Org = require('../../database/Org.js');
+const db = require('../../database/index-mysql');
 
 const expect = chai.expect;
 
@@ -25,6 +26,7 @@ const errorBody = {
 
 let eventMock;
 let orgMock;
+let dbMock;
 const sampleEvent = {
   title: 'Controller unit tests',
   local_date_time: new Date(),
@@ -40,12 +42,15 @@ const sampleEvent = {
 
 describe('controller', () => {
   beforeEach(() => {
-    eventMock = sinon.mock(Event);
-    orgMock = sinon.mock(Org);
+    // eventMock = sinon.mock(Event);
+    // orgMock = sinon.mock(Org);
+    dbMock = sinon.mock(db);
   });
   afterEach(() => {
-    eventMock.restore();
-    orgMock.restore();
+    dbMock.restore();
+
+    // eventMock.restore();
+    // orgMock.restore();
   })
 
   describe('checkEventId', () => {
@@ -182,38 +187,36 @@ describe('controller', () => {
     });
   });
 
-  describe('getEvent', () => {
-    let mockedOrgFindOne = null;
-    let mockedEventFindOne = null;
+  describe.only('getEvent', () => {
+    let mockedDbQuery = null;
     beforeEach(() => {
-      mockedOrgFindOne = orgMock.expects('findOne');
-      mockedEventFindOne = eventMock.expects('findOne');
+      mockedDbQuery = dbMock.expects('query');
     });
     afterEach(() => {
-      mockedOrgFindOne = null;
-      mockedEventFindOne = null;
+      mockedDbQuery = null;
     })
 
-    test('calls the mongoose findOne method on both the Event & Org models', () => {
-      mockedOrgFindOne.returns(Promise.resolve({ org_name: "", org_private: true, orgId: 'o10'}));
-      mockedOrgFindOne.once();
-      mockedEventFindOne.returns(Promise.resolve(sampleEvent));
-      mockedEventFindOne.withArgs({ eventId: MAX_NUMBER_OF_EVENTS });
-      mockedEventFindOne.once();
+    test('calls the db.query method with the correct arguments', () => {
+      // mock the db.query method, and assert that it was called with the correct statement & args
+      const statement = `SELECT event.id, event.title, event.local_date_time, event.org_id, org.org_name, org.org_private FROM event INNER JOIN org ON event.org_id=org.id WHERE event.id=?;`
       const req = mockReq(sampleReq);
       const response = {
         status: () => { return response },
         json: () => {
-          mockedOrgFindOne.verify(); // this feels hacky ...
+          mockedDbQuery.verify(); // this feels hacky ...
         }
       };
       const res = mockRes(response);
+      const args = [req.params.eventId];
+      mockedDbQuery.once();
+      mockedDbQuery.withArgs(statement, args);
+
+      mockedDbQuery.yields(null, ['results']);
       controller.getEvent(req, res, null);
-      mockedEventFindOne.verify();
     });
 
     test('sends a 500 error back to the client when there\'s a db error', () => {
-      mockedEventFindOne.returns(Promise.reject());
+      mockedDbQuery.yields(new Error());
       const req = mockReq(sampleReq);
       const res = mockRes();
       const statusSpy = sinon.spy(res.status);
@@ -221,7 +224,7 @@ describe('controller', () => {
       controller.getEvent(req, res, null);
       statusSpy.calledOnceWithExactly(500);
       sendSpy.calledOnceWithExactly();
-      mockedEventFindOne.verify();
+      mockedDbQuery.verify();
     });
   });
 });
