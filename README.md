@@ -94,7 +94,7 @@ POST /event/:eventId
 {
   "title": "STRING",
   "local_date_time": "STRING", // (in ISO 8601 format)
-  "orgId": "STRING",
+  "orgId": "NUMBER",
   // optional, defaults to null
   "series": {
     "frequency": {

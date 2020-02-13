@@ -10,6 +10,9 @@ const db = require('../../database/index-mysql');
 
 const expect = chai.expect;
 
+// TODO: decide on using either stubs or mocks for each describe bloc, not both ...
+
+
 // TODO: refactor to make this test suite DRYer
 // TODO: this will need to change when benchmarking and stress testing the db
 const MAX_NUMBER_OF_EVENTS = 100;
@@ -30,27 +33,22 @@ let dbMock;
 const sampleEvent = {
   title: 'Controller unit tests',
   local_date_time: new Date(),
-  orgId: 'o10',
+  orgId: 1,
   series: {
-    description: 'This is a different description',
+    description: 'Every 1st Saturday of the month until May 2020',
     frequency: {
-      day_of_week: 'Friday',
-      interval: 4,
+      day_of_week: 'Saturday',
+      interval: 1,
     },
   },
 };
 
 describe('controller', () => {
   beforeEach(() => {
-    // eventMock = sinon.mock(Event);
-    // orgMock = sinon.mock(Org);
-    dbMock = sinon.mock(db);
+    // dbMock = sinon.mock(db);
   });
   afterEach(() => {
-    dbMock.restore();
-
-    // eventMock.restore();
-    // orgMock.restore();
+    // dbMock.restore();
   })
 
   describe('checkEventId', () => {
@@ -160,40 +158,106 @@ describe('controller', () => {
     // TODO: should probably add other tests that verify the arguments to findOneAndUpdate change depending on the req object
   });
 
-  describe('addEvent', () => {
-    let mockedCreate = null;
-    beforeEach(() => { mockedCreate = eventMock.expects('create'); });
-    afterEach(() => { mockedCreate = null; });
+  describe.only('addEvent', () => {
+    let mockedDbQuery = null;
+    beforeEach(() => {
+      // dbMock = sinon.mock(db);
+      // mockedDbQuery = dbMock.expects('query');
+    });
+    afterEach(() => {
+      // dbMock.restore();
+      // mockedDbQuery = null;
+    })
 
-    test('calls the mongoose create method with the correct arguments', () => {
-      mockedCreate.returns(Promise.resolve());
-      mockedCreate.withArgs(Object.assign({}, { eventId: MAX_NUMBER_OF_EVENTS }, sampleEvent));
-      const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: sampleEvent }));
+    test('Correctly queries for the series_id', () => {
+      dbMock = sinon.mock(db);
+      mockedDbQuery = dbMock.expects('query');
+
+      // assert that mockedDbQuery is called with the correct arguments
+      const seriesStatement = `SELECT * FROM series WHERE day_of_week=? AND series_interval=? AND series_description=?;`;
+      const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: sampleEvent })); // TODO: this params is not required here, but it does keep the tests consistent with each other ...
       const res = mockRes();
-      controller.addEvent(req, res, null)
-      mockedCreate.verify();
+
+      const seriesArgs = [sampleEvent.series.frequency.day_of_week, sampleEvent.series.frequency.interval, sampleEvent.series.description]
+      mockedDbQuery.once();
+      mockedDbQuery.withArgs(seriesStatement, seriesArgs);
+
+      controller.addEvent(req, res, null);
+      mockedDbQuery.verify();
+
+      dbMock.restore();
+      mockedDbQuery = null;
     });
 
-    test('informs the client there was an error if the db query rejects', () => {
-      mockedCreate.returns(Promise.reject());
-      const req = mockReq();
+    test('Calls the INSERT query with the correct arguments', () => {
+      const stub = sinon.stub(db, 'query');
+
+      const statement = `INSERT INTO event (title, local_date_time, org_id, series_id) VALUES (?, ?, ?, ?);`;
+      const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: sampleEvent })); // TODO: this params is not required here, but it does keep the tests consistent with each other ...
+      const res = mockRes();
+
+      expect(stub.notCalled).to.be.true;
+      // call the first query's cb with specific arguments, through Sinon
+      stub.yieldsRight(null, [{id: 1}]);
+      controller.addEvent(req, res, null);
+
+      // then assert that the stub's second call was called with the correct arguments
+      const args = [sampleEvent.title, sampleEvent.local_date_time, sampleEvent.orgId, 1]
+      stub.getCall(1).calledWithExactly(statement, args);
+      expect(stub.calledTwice).to.be.true;
+
+      const statusSpy = sinon.spy(res.status);
+      const sendSpy = sinon.spy(res.send);
+      statusSpy.calledOnceWithExactly(200);
+      sendSpy.calledOnceWithExactly();
+
+      stub.restore();
+    });
+
+    test('sends a 500 error back to the client when the first query errors', () => {
+      const stub = sinon.stub(db, 'query');
+      stub.yieldsRight(new Error());
+
+      const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: sampleEvent })); // TODO: this params is not required here, but it does keep the tests consistent with each other ...
       const res = mockRes();
 
       const statusSpy = sinon.spy(res.status);
       const sendSpy = sinon.spy(res.send);
       controller.addEvent(req, res, null);
-      statusSpy.calledOnceWithExactly(400);
+      statusSpy.calledOnceWithExactly(500);
       sendSpy.calledOnceWithExactly();
+
+      stub.restore();
+    });
+
+    test('sends a 500 error back to the client when the second query errors', () => {
+      const stub = sinon.stub(db, 'query');
+
+      stub.onCall(0).yieldsRight(null, [{id: 1}]);
+      stub.onCall(1).yieldsRight(new Error());
+
+      const req = mockReq(Object.assign({}, { params: { eventId: MAX_NUMBER_OF_EVENTS }}, { body: sampleEvent })); // TODO: this params is not required here, but it does keep the tests consistent with each other ...
+      const res = mockRes();
+
+      const statusSpy = sinon.spy(res.status);
+      const sendSpy = sinon.spy(res.send);
+      controller.addEvent(req, res, null);
+      statusSpy.calledOnceWithExactly(500);
+      sendSpy.calledOnceWithExactly();
+
+      stub.restore();
     });
   });
 
   describe.only('getEvent', () => {
     let mockedDbQuery = null;
     beforeEach(() => {
+      dbMock = sinon.mock(db);
       mockedDbQuery = dbMock.expects('query');
     });
     afterEach(() => {
       mockedDbQuery = null;
+      dbMock.restore();
     })
 
     test('calls the db.query method with the correct arguments', () => {

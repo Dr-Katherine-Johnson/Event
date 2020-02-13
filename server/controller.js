@@ -21,22 +21,19 @@ module.exports = {
   },
 
   addEvent(req, res, next) {
-    const eventData = {
-      eventId: req.params.eventId,
-      title: req.body.title,
-      local_date_time: req.body.local_date_time,
-      orgId: req.body.orgId,
-      series: req.body.series
-    }
-
-    Event.create(eventData)
-      .then(results => {
-        res.status(200).json(results);
-      })
-      .catch(err => {
-        console.log(err);
-        res.status(400).send();
-      })
+    const { series } = req.body;
+    const seriesArgs = [series.frequency.day_of_week, series.frequency.interval, series.description]
+    const seriesStatement = `SELECT * FROM series WHERE day_of_week=? AND series_interval=? AND series_description=?;`;
+    db.query(seriesStatement, seriesArgs, (error, results, fields) => {
+      if (error) { return res.status(500).send(error); }
+      const { title, local_date_time, orgId } = req.body;
+      const args = [title, new Date(local_date_time), orgId, results[0].id]
+      const statement = `INSERT INTO event (title, local_date_time, org_id, series_id) VALUES (?, ?, ?, ?);`
+      db.query(statement, args, (error, results, fields) => {
+        if (error) { return res.status(500).send(error); }
+        res.status(200).send();
+      });
+    });
   },
 
   updateEvent(req, res, next) {
