@@ -22,9 +22,9 @@ module.exports = {
 
   addEvent(req, res, next) {
     const { series } = req.body;
-    const seriesArgs = [series.frequency.day_of_week, series.frequency.interval, series.description]
+    const args = [series.frequency.day_of_week, series.frequency.interval, series.description]
     const seriesStatement = `SELECT * FROM series WHERE day_of_week=? AND series_interval=? AND series_description=?;`;
-    db.query(seriesStatement, seriesArgs, (error, results, fields) => {
+    db.query(seriesStatement, args, (error, results, fields) => {
       if (error) { return res.status(500).send(error); }
       const { title, local_date_time, orgId } = req.body;
       const args = [title, new Date(local_date_time), orgId, results[0].id]
@@ -36,64 +36,82 @@ module.exports = {
     });
   },
 
+  // TODO: refactor tests to use MySQL
   updateEvent(req, res, next) {
-    // {
-    //   "title": "STRING",
-    //   "local_date_time": "STRING", // (in ISO 8601 format)
-    //   "orgId": "STRING",
-    //   "series": {
-    //     "frequency": {
-    //       "day_of_week": "STRING",
-    //       "interval": "NUMBER",
-    //     },
-    //     "description": "STRING",
-    //   },
-    // }
-    // update any of these fields that exist
-    // event table
-      // title
-      // local_date_time
-      // orgId ???
+    const update = (updateSeries = false, updateEvent = false, req, series_id) => {
+      let args = [];
+      let pairs = [];
 
-    // series table,
-    // find the id where the column match these values, otherwise create a new row
-      // series.frequency.day_of_week
-      // series.frequency.interval
-      // series.description
-    // return that id
-    // set the series_id foreign key in the event table to the correct id (that you just returned)
+      // determine if I need to update any event fields
+      if (req.body.title !== undefined || req.body.local_date_time !== undefined ) {
+        updateEvent = true;
+        if (req.body.title !== undefined) {
+          pairs.push('title = ?');
+          args.push(req.body.title);
+          req.body.title = undefined;
+        }
 
+        if (req.body.local_date_time !== undefined) {
+          pairs.push('local_date_time = ?');
+          args.push(new Date(req.body.local_date_time));
+          req.body.local_date_time = undefined;
+        }
 
+        args.push(req.params.eventId);
+      } else {
+        // determine if I need to update any series fields
+        const series = req.body.series;
+        if (series.description !== undefined) {
+          pairs.push('series_description = ?');
+          args.push(series.description);
+          req.body.series.description = undefined;
+        }
 
-    let eventData = {
-      title: req.body.title,
-      local_date_time: req.body.local_date_time,
-      orgId: req.body.orgId,
-    }
+        if (series.frequency !== undefined) {
+          if (series.frequency.day_of_week !== undefined) {
+            pairs.push('day_of_week = ?');
+            args.push(series.frequency.day_of_week);
+            req.body.series.frequency.day_of_week = undefined;
+          }
 
-    // necessary to set fields in embedded documents in Mongo
-    // https://docs.mongodb.com/manual/reference/operator/update/set/#set-fields-in-embedded-documents
-    let dayOfWeek = {};
-    let interval = {};
-    let description = {};
-    if (req.body.series) {
-      description = { 'series.description': req.body.series.description }
+          if (series.frequency.interval !== undefined) {
+            pairs.push('series_interval = ?');
+            args.push(series.frequency.interval);
+            req.body.series.frequency.interval = undefined;
+          }
+        }
 
-      if (req.body.series.frequency) {
-        dayOfWeek = { 'series.frequency.day_of_week': req.body.series.frequency.day_of_week }
-        interval = { 'series.frequency.interval': req.body.series.frequency.interval }
+        if (args.length !== 0) {
+          updateSeries = true;
+          args.push(series_id);
+        }
       }
-    }
-    eventData = Object.assign({}, eventData, dayOfWeek, interval, description);
 
-    Event.findOneAndUpdate({ eventId: req.params.eventId }, eventData, { omitUndefined: true })
-      .then(results => {
-        res.status(200).json(results);
-      })
-      .catch(err => {
-        console.log(err);
-        res.status(500).send();
-      })
+      // base case
+      if (!updateSeries && !updateEvent) { return res.status(200).send(); }
+
+      // prepare and make the query
+      let table = '';
+      if (updateSeries) { table = 'series'; }
+      if (updateEvent) { table = 'event'; }
+
+      statement = `UPDATE ${table} SET ${pairs.join(', ')}  where id=?;`;
+      db.query(statement, args, (error, results, fields) => {
+        if (error) { console.log(error); return res.status(500).send(); }
+        // make the query, if any
+        update(table === 'series' ? false : updateSeries, table === 'event' ? false : updateEvent, req, series_id);
+      });
+    };
+
+    // get the current foreign key for the relevant row in the series table
+    let statement = 'SELECT * FROM event WHERE id=?';
+    let args = [req.params.eventId];
+
+    db.query(statement, args, (error, results, fields) => {
+      if (error) { console.log(error); return res.status(500).send(); }
+      // recurse, and run necessary queries
+      update(false, false, req, results[0].series_id);
+    });
   },
 
   deleteEvent(req, res, next) {
