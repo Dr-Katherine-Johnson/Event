@@ -37,6 +37,34 @@ module.exports = {
   },
 
   updateEvent(req, res, next) {
+    // {
+    //   "title": "STRING",
+    //   "local_date_time": "STRING", // (in ISO 8601 format)
+    //   "orgId": "STRING",
+    //   "series": {
+    //     "frequency": {
+    //       "day_of_week": "STRING",
+    //       "interval": "NUMBER",
+    //     },
+    //     "description": "STRING",
+    //   },
+    // }
+    // update any of these fields that exist
+    // event table
+      // title
+      // local_date_time
+      // orgId ???
+
+    // series table,
+    // find the id where the column match these values, otherwise create a new row
+      // series.frequency.day_of_week
+      // series.frequency.interval
+      // series.description
+    // return that id
+    // set the series_id foreign key in the event table to the correct id (that you just returned)
+
+
+
     let eventData = {
       title: req.body.title,
       local_date_time: req.body.local_date_time,

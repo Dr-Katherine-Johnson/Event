@@ -43,7 +43,7 @@ const sampleEvent = {
   },
 };
 
-describe('controller', () => {
+describe.only('controller', () => {
   beforeEach(() => {
     // dbMock = sinon.mock(db);
   });
@@ -158,7 +158,7 @@ describe('controller', () => {
     // TODO: should probably add other tests that verify the arguments to findOneAndUpdate change depending on the req object
   });
 
-  describe.only('addEvent', () => {
+  describe('addEvent', () => {
     let mockedDbQuery = null;
     beforeEach(() => {
       // dbMock = sinon.mock(db);
@@ -249,7 +249,7 @@ describe('controller', () => {
     });
   });
 
-  describe.only('getEvent', () => {
+  describe('getEvent', () => {
     let mockedDbQuery = null;
     beforeEach(() => {
       dbMock = sinon.mock(db);
@@ -289,6 +289,55 @@ describe('controller', () => {
       statusSpy.calledOnceWithExactly(500);
       sendSpy.calledOnceWithExactly();
       mockedDbQuery.verify();
+    });
+  });
+
+  describe('', () => {
+    test('', () => {
+
+    });
+  });
+
+
+  describe.only('spies', () => {
+    test('withArgs', () => {
+      const object = { method: function(arg) { console.log('called! with ' + arg); }};
+      const spy = sinon.spy(object, 'method');
+
+      object.method(42);
+      object.method(1);
+
+      console.log(spy.callCount);
+
+      const fortyTwoSpy = spy.withArgs(42);
+      expect(fortyTwoSpy.calledOnce).to.be.true;
+      expect(spy.withArgs(1).calledOnce).to.be.true;
+      expect(spy.calledTwice).to.be.true;
+      object.method(42)
+      expect(fortyTwoSpy.calledTwice).to.be.true;
+      expect(spy.withArgs(1).calledOnce).to.be.true;
+      expect(spy.calledThrice).to.be.true;
+      console.log(spy.callCount);
+
+
+      expect(spy.notCalled).to.be.false;
+
+      expect(spy.calledWith(42)).to.be.true;
+      expect(spy.calledWith(1)).to.be.true;
+      expect(spy.calledWith(56)).to.be.false;
+
+      expect(spy.calledWithExactly(42)).to.be.true;
+      expect(spy.calledWithExactly(1)).to.be.true;
+
+      expect(spy.neverCalledWith(56)).to.be.true;
+
+      expect(spy.threw()).to.be.false;
+
+      const spyCalls = spy.getCalls();
+      expect(spyCalls).to.have.lengthOf(3);
+
+      const spyExceptions = spy.exceptions;
+      console.log(spyExceptions);
     });
   });
 });
