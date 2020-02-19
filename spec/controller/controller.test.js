@@ -292,52 +292,9 @@ describe.only('controller', () => {
     });
   });
 
-  describe('', () => {
+  describe('updateEvent', () => {
     test('', () => {
 
-    });
-  });
-
-
-  describe.only('spies', () => {
-    test('withArgs', () => {
-      const object = { method: function(arg) { console.log('called! with ' + arg); }};
-      const spy = sinon.spy(object, 'method');
-
-      object.method(42);
-      object.method(1);
-
-      console.log(spy.callCount);
-
-      const fortyTwoSpy = spy.withArgs(42);
-      expect(fortyTwoSpy.calledOnce).to.be.true;
-      expect(spy.withArgs(1).calledOnce).to.be.true;
-      expect(spy.calledTwice).to.be.true;
-      object.method(42)
-      expect(fortyTwoSpy.calledTwice).to.be.true;
-      expect(spy.withArgs(1).calledOnce).to.be.true;
-      expect(spy.calledThrice).to.be.true;
-      console.log(spy.callCount);
-
-
-      expect(spy.notCalled).to.be.false;
-
-      expect(spy.calledWith(42)).to.be.true;
-      expect(spy.calledWith(1)).to.be.true;
-      expect(spy.calledWith(56)).to.be.false;
-
-      expect(spy.calledWithExactly(42)).to.be.true;
-      expect(spy.calledWithExactly(1)).to.be.true;
-
-      expect(spy.neverCalledWith(56)).to.be.true;
-
-      expect(spy.threw()).to.be.false;
-
-      const spyCalls = spy.getCalls();
-      expect(spyCalls).to.have.lengthOf(3);
-
-      const spyExceptions = spy.exceptions;
-      console.log(spyExceptions);
     });
   });
 });

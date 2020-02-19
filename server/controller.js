@@ -114,17 +114,18 @@ module.exports = {
     });
   },
 
+  // TODO: refactor tests to us MySQL
   deleteEvent(req, res, next) {
-    Event.deleteOne({ eventId: req.params.eventId })
-      .then(results => {
-        res.status(200).json(results);
-      })
-      .catch(err => {
-        console.log(err);
-        res.status(500).send();
-      })
+    const statement = `DELETE FROM event WHERE id=?`;
+    const args = [req.params.eventId];
+
+    db.query(statement, args, (error, results, fields) => {
+      if (error) { return res.status(500).send(error); }
+      res.status(200).send(results);
+    });
   },
 
+  // TODO: refactor to use MySQL along with tests
   getEventMembers(req, res, next) {
     Event.findOne({ eventId: req.params.eventId })
       .then((event) => {
@@ -143,6 +144,7 @@ module.exports = {
       })
   },
 
+  // TODO: refactor to use MySQL along with tests
   getEventTimeDate(req, res, next) {
     Event.findOne({ eventId: req.params.eventId })
       .then((event) => {
@@ -163,6 +165,7 @@ module.exports = {
       })
   },
 
+  // TODO: refactor to use MySQL along with tests
   checkEventId(req, res, next) {
     if (!Number.isFinite(Number(req.params.eventId))) {
       throw new Error('The eventId route parameter must be a number. Please check the API section of the README');
