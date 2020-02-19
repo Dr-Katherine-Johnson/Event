@@ -26,7 +26,8 @@
     "build:dev": "webpack -d --watch",
     "build:prod": "webpack -p",
     "start:dev": "nodemon server/index.js",
-    "start": "node ./server/index.js"
+    "start": "node ./server/index.js",
+    "k6": "k6 run ./k6script.js"
   },
   "jest": {
     "transform": {
@@ -82,6 +83,7 @@
     "moment": "^2.24.0",
     "mongoose": "^5.7.12",
     "mysql": "^2.18.1",
+    "newrelic": "^6.4.0",
     "query-string": "^6.9.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
