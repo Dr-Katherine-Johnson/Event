@@ -11,12 +11,21 @@ const fetchEventDataFromAPI = (API, eventId, endpoint) => {
     .then((data) => data);
 };
 
+// const fetchAllEventData = (eventId) => (
+//   Promise.all([
+//     fetchEventDataFromAPI(eventAPI, eventId),
+//     fetchEventDataFromAPI(rsvpAPI, eventId, 'hosts'),
+//   ]).then(([event, hosts]) => {
+//     return { event, hosts };
+//   }));
+
+// TODO: for load testing this component in isolation
 const fetchAllEventData = (eventId) => (
   Promise.all([
     fetchEventDataFromAPI(eventAPI, eventId),
-    fetchEventDataFromAPI(rsvpAPI, eventId, 'hosts'),
-  ]).then(([event, hosts]) => {
-    return { event, hosts };
+    // fetchEventDataFromAPI(rsvpAPI, eventId, 'hosts'),
+  ]).then(([event]) => {
+    return { event };
   }));
 
 export default fetchAllEventData;
