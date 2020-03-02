@@ -28,7 +28,8 @@
     "start:dev": "nodemon server/index.js",
     "start": "node ./server/index.js",
     "k6:get": "k6 run ./loadtesting/get.js",
-    "k6:put": "k6 run ./loadtesting/put.js"
+    "k6:put": "k6 run ./loadtesting/put.js",
+    "k6:proxy": "k6 run ./loadtesting/proxy.js"
   },
   "jest": {
     "transform": {
