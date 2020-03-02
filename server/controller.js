@@ -2,6 +2,15 @@ const Event = require('../database/Event.js');
 const Org = require('../database/Org.js');
 const db = require('../database/index-mysql.js');
 
+const redis = require('redis');
+const redisClient = redis.createClient();
+redisClient.on('error', (error) => console.log(error));
+
+// // TODO: Working and playing with Redis
+// redisClient.set('christian:test', 'this is a test', redis.print);
+// redisClient.get('christian:test', redis.print);
+
+
 const errorBody = {
   status: 'error',
   message: 'That event does not exist',
@@ -9,14 +18,45 @@ const errorBody = {
 
 module.exports = {
   getEvent(req, res, next) {
-    // MySQL version
-    const statement = `SELECT event.id, event.title, event.local_date_time, event.org_id, org.org_name, org.org_private FROM event INNER JOIN org ON event.org_id=org.id WHERE event.id=?;`
     const args = [req.params.eventId];
-    db.query(statement, args, (error, results, fields) => {
-      if (error) {
-        return res.status(500).send();
+
+    // look for this ID in redis
+    redisClient.hgetall(`event:${args[0]}`, (error, response) => {
+      if (error) { console.log(error); return res.status(500).send(); }
+
+      // if it's there
+      if (response) {
+        // return data retrieved from redis
+        res.status(200).send(response);
+      } else {
+        // get it from MySQL
+        const statement = `SELECT event.id, event.title, event.local_date_time, event.org_id, org.org_name, org.org_private FROM event INNER JOIN org ON event.org_id=org.id WHERE event.id=?;`
+
+        db.query(statement, args, (error, results) => {
+          if (error) { console.log(error); return res.status(500).send(); }
+
+          // the RowDataPacket object that comes back from MySQL will only ever be ONE LEVEL DEEP (ie, with NO NESTED objects or arrays, because it's coming back from a SQL database)
+          // for that reason (ie, because we're guaranteed that each value will be a primitive - or convertible to a primitive in the case of DATE objects - ISO 8601 String) it's safe to for...in over the keys and store the values in a hash in redis, (without having to flatten the object)
+
+          const forRedis = [`event:${args[0]}`];
+          for (let key in results[0]) {
+            forRedis.push(key);
+            if (key === 'local_date_time') {
+              forRedis.push(results[0][key].toISOString());
+            } else {
+              forRedis.push(results[0][key]);
+            }
+          }
+
+          // update redis with the returned query
+          redisClient.hmset(...forRedis, (error, response) => {
+            if (error) { console.log(error); return res.status(500).send(); }
+
+            // send the returned query back to the client
+            res.status(200).json(results[0]);
+          });
+        });
       }
-      res.status(200).json(results[0]);
     });
   },
 
