@@ -155,3 +155,15 @@ Example:
 
 DELETE /event/:eventId
 - Removes the target event
+
+
+
+There is a redis cache available, with a schema for accessing keys as follows:
+```json
+event:eventId
+```
+
+Example:
+```json
+event:9123567
+```
