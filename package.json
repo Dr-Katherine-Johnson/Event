@@ -20,13 +20,16 @@
     "bb >= 10"
   ],
   "scripts": {
-    "test": "jest",
-    "db-cassandra:seed": "cqlsh -f ./database/event-schema.cql && node ./database/seed.js",
+    "test": "jest ./spec/controller/controller.test.js",
+    "db-cassandra:seed": "cqlsh -f ./database/event-schema.cql && node ./database/seed.js && exit 0",
     "db-mysql:seed": "mysql -u root < ./database/mysql-schema.sql && node ./database/seed.js && exit 0",
     "build:dev": "webpack -d --watch",
     "build:prod": "webpack -p",
     "start:dev": "nodemon server/index.js",
-    "start": "node ./server/index.js"
+    "start": "node ./server/index.js",
+    "k6:get": "k6 run ./loadtesting/get.js",
+    "k6:put": "k6 run ./loadtesting/put.js",
+    "k6:proxy": "k6 run ./loadtesting/proxy.js"
   },
   "jest": {
     "transform": {
@@ -73,6 +76,7 @@
     "autoprefixer": "^9.7.3",
     "bluebird": "^3.7.1",
     "body-parser": "^1.19.0",
+    "browserify": "^16.5.0",
     "browserslist": "^4.8.2",
     "cassandra-driver": "^4.4.0",
     "cors": "^2.8.5",
@@ -82,9 +86,11 @@
     "moment": "^2.24.0",
     "mongoose": "^5.7.12",
     "mysql": "^2.18.1",
+    "newrelic": "^6.4.0",
     "query-string": "^6.9.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "redis": "^3.0.2",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.88.2",
     "styled-components": "^4.4.1",

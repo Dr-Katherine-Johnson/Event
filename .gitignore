@@ -18,3 +18,8 @@ public
 # misc
 LICENSE
 
+# stress testing
+newrelic.js
+newrelic_agent.log
+faker.js
+fakerbundle.js

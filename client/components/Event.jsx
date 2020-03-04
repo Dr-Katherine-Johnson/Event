@@ -38,7 +38,8 @@ class Event extends React.Component {
         const weekday = moment(response.event.local_date_time).format('dddd');
         const timeDate = `${weekday}, ${date}`;
         const { title } = response.event;
-        this.setState({ timeDate, title, hosts: response.hosts });
+        this.setState({ timeDate, title }); // TODO: for load testing this component in isolation
+        // this.setState({ timeDate, title, hosts: response.hosts });
       });
   }
 

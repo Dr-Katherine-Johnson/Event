@@ -55,3 +55,64 @@ CREATE TABLE org_person (
   founder BOOLEAN,
   member BOOLEAN
 );
+
+-- -- Benchmarking queries
+-- OPTION1, with WHERE statement
+-- SELECT
+--   *
+-- FROM (
+--   event, org, series, org_person, person )
+-- WHERE
+--     event.id=9999990
+--   AND
+--     org.id=event.org_id
+--   AND
+--     series.id=event.series_id
+--   AND
+--     event.org_id=org_person.org_id
+--   AND (
+--     org_person.founder=TRUE OR org_person.member=TRUE )
+--   AND org_person.person_id=person.id
+-- ;
+
+-- -- OPTION2, with INNER JOINS
+-- SELECT * FROM event
+-- INNER JOIN org
+--   ON event.org_id=org.id
+-- INNER JOIN series
+--   ON event.series_id=series.id
+-- INNER JOIN org_person
+--   ON event.org_id=org_person.org_id
+-- INNER JOIN person
+--   ON org_person.person_id=person.id
+-- WHERE
+--     event.id=9999990
+--   AND
+--     (org_person.founder=TRUE OR org_person.member=TRUE)
+-- ;
+
+
+-- -- Timing queries
+-- SELECT EVENT_ID, TRUNCATE(TIMER_WAIT/1000000000,6) as Duration, SQL_TEXT
+--        FROM performance_schema.events_statements_history_long WHERE SQL_TEXT like '%9999990%';
+
+-- SELECT event_name AS Stage, TRUNCATE(TIMER_WAIT/1000000000,6) AS Duration
+-- FROM performance_schema.events_stages_history_long WHERE NESTING_EVENT_ID=76;
+
+
+
+-- TODO: columns that I actually want ...
+--   event.id,
+--   event.title,
+--   event.local_date_time,
+--   event.org_id,
+--   event.series_id,
+--   org.org_name,
+--   org.org_private,
+--   series.series_description,
+--   series.day_of_week,
+--   series.series_interval,
+--   org_person.founder,
+--   org_person.member,
+--   person.first_name,
+--   person.last_name
