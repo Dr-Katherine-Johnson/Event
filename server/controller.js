@@ -1,12 +1,8 @@
 const Event = require('../database/Event.js');
 const Org = require('../database/Org.js');
 const db = require('../database/index-mysql.js');
-
+const redisClient = require('../cache/index');
 const utils = require('./utils');
-
-const redis = require('redis');
-const redisClient = redis.createClient();
-redisClient.on('error', (error) => console.log(error));
 
 const errorBody = {
   status: 'error',

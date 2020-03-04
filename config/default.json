@@ -5,5 +5,11 @@
       "user": "root",
       "database": "events"
     }
+  },
+  "cache": {
+    "redisConfig": {
+      "host": "localhost",
+      "port": "6379"
+    }
   }
 }

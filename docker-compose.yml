@@ -1,11 +1,26 @@
 version: '3'
 services:
-  event:
-    image: manuelag19/drliskov_event
-    ports:
-      - '80:5000'
-    depends_on:
-      - 'database'
-    command: sh -c 'npm run db:seed && npm start'
+  # TODO: work in progress
+  # event:
+  #   # image: manuelag19/drliskov_event
+  #   build: .
+  #   ports:
+  #     - '5000:5000'
+  #   depends_on:
+  #     - database
+  #     - redis
+  #   # command: sh -c 'npm run db-mysql:seed && npm start'
   database:
-    image: mongo:latest
+    image: mysql
+    environment:
+      # TODO: change this
+      MYSQL_ROOT_PASSWORD: password
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - bridge
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379"
+    networks:
+      - bridge
