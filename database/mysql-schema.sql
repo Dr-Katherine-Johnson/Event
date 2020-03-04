@@ -4,36 +4,36 @@ CREATE DATABASE events;
 use events;
 
 CREATE TABLE org (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  org_name VARCHAR(255),
-  org_private BOOLEAN
+  id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  org_name VARCHAR(255) NOT NULL,
+  org_private BOOLEAN NOT NULL
 );
 
 CREATE TABLE series (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  series_description VARCHAR(255),
-  day_of_week VARCHAR(255),
-  series_interval INT
+  id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  series_description VARCHAR(255) NOT NULL,
+  day_of_week VARCHAR(255) NOT NULL,
+  series_interval INT NOT NULL
 );
 
 CREATE TABLE person (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  first_name VARCHAR(255),
-  last_name VARCHAR(255),
+  id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL
   -- this was a holdover from the legacy database (MongoDB), where the identifier for each person was a string like `m0` `m145` `m487` etc...
-  identifier VARCHAR(255)
+  -- identifier VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE event (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255),
-  local_date_time DATETIME,
-  org_id INT,
+  id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  local_date_time DATETIME NOT NULL,
+  org_id INT NOT NULL,
   FOREIGN KEY (org_id)
     REFERENCES org (id)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  series_id INT,
+  series_id INT NOT NULL,
   FOREIGN KEY (series_id)
     REFERENCES series (id)
     ON DELETE CASCADE
@@ -41,19 +41,19 @@ CREATE TABLE event (
 );
 
 CREATE TABLE org_person (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  org_id INT,
+  id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+  org_id INT NOT NULL,
   FOREIGN KEY (org_id)
     REFERENCES org (id)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  person_id INT,
+  person_id INT NOT NULL,
   FOREIGN KEY (person_id)
     REFERENCES person (id)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  founder BOOLEAN,
-  member BOOLEAN
+  founder BOOLEAN NOT NULL,
+  member BOOLEAN NOT NULL
 );
 
 -- -- Benchmarking queries

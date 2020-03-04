@@ -1,9 +1,8 @@
 const mysql = require('mysql');
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  database: 'events'
-});
+const config = require('config');
+
+const dbConfig = config.get('database.dbConfig');
+const connection = mysql.createConnection(dbConfig);
 
 connection.connect((err) => {
   if (err) throw err;

@@ -9,12 +9,12 @@ const db = require('./index-mysql.js');
 const mysql = require('mysql');
 
 const NUMBERS = {
-  EVENTS: 10000000, // target 10,000,000
-  ORGS: 1000, // target 1,000
-  PEOPLE: 1000, // target 1,000
-  // EVENTS: 1000,
-  // ORGS: 100,
-  // PEOPLE: 100
+  // EVENTS: 10000000, // target 10,000,000
+  // ORGS: 1000, // target 1,000
+  // PEOPLE: 1000, // target 1,000
+  EVENTS: 1000,
+  ORGS: 100,
+  PEOPLE: 100
 };
 
 // TODO: make return values from util functions a consistent format ...
@@ -99,7 +99,7 @@ const generatePerson = (useMySQL = true, times, cb) => {
     return cb(null, null);
   }
 
-  const args = utils.makePerson();
+  let args = utils.makePerson();
 
   if (useMySQL) {
     args = [args.first_name, args.last_name];
@@ -112,31 +112,38 @@ const generatePerson = (useMySQL = true, times, cb) => {
   }
 }
 
-const generateEvent = (useMySQL = true, times, options = {
-  eventUuid: Uuid.random(),
-  personsToAdd: 5,
-  personIndices: {},
-  personI: 0,
-  orgI: Math.floor(Math.random() * 1000),
-  seriesI: Math.floor(Math.random() * 21),
-  eventDetails: utils.makeEvent()
-}, cb) => {
+const generateEvent = (useMySQL = true, times, options, cb) => {
   if (times === 0) { return cb(null, null); }
+
+  options = options || {
+    eventUuid: Uuid.random(),
+    personsToAdd: 5,
+    personIndices: {},
+    personI: 0,
+    orgI: Math.floor(Math.random() * 1000),
+    seriesI: Math.floor(Math.random() * 21),
+    eventDetails: utils.makeEvent()
+  }
 
   let statement;
 
   if (useMySQL) {
     args = [
-      eventDetails.title,
-      eventDetails.local_date_time,
+      options.eventDetails.title,
+      options.eventDetails.local_date_time,
       faker.random.number({ min: 1, max: NUMBERS.ORGS }),
       faker.random.number({ min: 1, max: 21 })
     ];
 
-    statement = `INSERT INTO event (title, local_date_time, org_id, series_id uuid) VALUES (?, ?, ?, ?);`;
+    statement = `INSERT INTO event (title, local_date_time, org_id, series_id) VALUES (?, ?, ?, ?);`;
     db.query(statement, args, (err, results, fields) => {
       if (err) throw err;
-      generateEvent(useMySQL, times - 1, {}, cb);
+
+      options = {
+        eventDetails: utils.makeEvent()
+      };
+
+      generateEvent(useMySQL, times - 1, options, cb);
     })
   } else {
     // event_by_id is the one Cassandra table needed
@@ -409,7 +416,7 @@ const seed = (useMySQL = true) => {
         generatePerson(useMySQL, NUMBERS.PEOPLE, () => {
           console.timeEnd('person');
           console.time('event');
-          generateEvent(useMySQL, NUMBERS.EVENTS, {}, () => {
+          generateEvent(useMySQL, NUMBERS.EVENTS, null, () => {
             console.timeEnd('event');
             console.time('org_person');
             generateOrgPerson(useMySQL, 1, 0, 0, 0, false, false, () => {

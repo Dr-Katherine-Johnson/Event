@@ -1,0 +1,9 @@
+{
+  "database": {
+    "dbConfig": {
+      "host": "localhost",
+      "user": "root",
+      "database": "events"
+    }
+  }
+}

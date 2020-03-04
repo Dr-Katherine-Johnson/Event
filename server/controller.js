@@ -36,7 +36,7 @@ module.exports = {
           // for that reason (ie, because we're guaranteed that each value will be a primitive - or convertible to a primitive in the case of DATE objects - ISO 8601 String) it's safe to for...in over the keys and store the values in a hash in redis, (without having to flatten the object)
 
           // update redis with the returned query
-          redisClient.hmset(...[`event:${args[0]}`].concat(forRedis(results[0])), (error, response) => {
+          redisClient.hmset(...[`event:${args[0]}`].concat(utils.forRedis(results[0])), (error, response) => {
             if (error) { console.log(error); return res.status(500).send(); }
 
             // send the returned query back to the client
