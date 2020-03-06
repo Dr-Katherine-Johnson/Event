@@ -4,8 +4,7 @@
       "host": "localhost",
       "user": "root",
       "database": "events",
-      "port": 3306,
-      "password": "password"
+      "port": 3306
     }
   },
   "cache": {

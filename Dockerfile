@@ -1,11 +1,5 @@
 FROM node:10.15.1
 
-# installing the mysql client on this image
-RUN apt-get update && apt-get install -y mysql-client && rm -rf /var/lib/apt
-
-# installing the mysql server on the image
-RUN apt-get update && apt-get install -y mysql-server
-
 # Create app directory
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -19,7 +13,7 @@ RUN npm cache clean --force && npm install
 # npm install step
 COPY . .
 
-# set application PORT and expose docker PORT, 80 is what Elastic Beanstalk expects
+# set application PORT and expose docker PORT
 EXPOSE 5000
 
-CMD [ "npm", "start" ]
+# CMD [ "npm", "start" ]

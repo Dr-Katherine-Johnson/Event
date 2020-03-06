@@ -4,8 +4,7 @@
       "host": "DATABASE_HOST",
       "user": "DATABASE_USER",
       "database": "DATABASE_NAME",
-      "port": "DATABASE_PORT",
-      "password": "MYSQL_ROOT_PASSWORD"
+      "port": "DATABASE_PORT"
     }
   },
   "cache": {

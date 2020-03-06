@@ -1,9 +1,12 @@
 const faker = require('faker');
-const cassandraDB = require('./index-cassandra.js');
 const Event = require('./Event.js');
 const Org = require('./Org.js');
-const cassandra = require('cassandra-driver')
-const Uuid = cassandra.types.Uuid;
+
+// TODO: remove these on new commits
+let cassandraDB, cassandra, Uuid;
+cassandra = require('cassandra-driver')
+// cassandraDB = require('./index-cassandra.js');
+Uuid = cassandra.types.Uuid;
 
 const db = require('./index-mysql.js');
 const mysql = require('mysql');

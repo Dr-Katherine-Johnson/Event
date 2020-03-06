@@ -1,7 +1,0 @@
-{
-  "database": {
-    "dbConfig": {
-      "host": "database"
-    }
-  }
-}

@@ -10,9 +10,11 @@ const connection = mysql.createConnection(dbConfig);
 connection.connect((err) => {
   if (err) {
     console.log('dbConfig: ', dbConfig);
-    throw err;
+    // TODO: better error handling?
+    // throw err;
+    console.log(err);
   };
-  // console.log(`Connected to MySQL as ID ${connection.threadId}`);
+  console.log(`Connected to MySQL as ID ${connection.threadId}`);
 });
 
 module.exports = connection;
