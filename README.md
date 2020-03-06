@@ -61,6 +61,8 @@ npm run build:prod
 npm start
 ```
 
+TODO: add .env variables section
+
 ## API
 GET /event/:eventId
 - Returns information about an event, in JSON format

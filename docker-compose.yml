@@ -1,26 +1,45 @@
 version: '3'
 services:
   # TODO: work in progress
-  # event:
-  #   # image: manuelag19/drliskov_event
-  #   build: .
-  #   ports:
-  #     - '5000:5000'
-  #   depends_on:
-  #     - database
-  #     - redis
-  #   # command: sh -c 'npm run db-mysql:seed && npm start'
+  event-api:
+    image: bellcd/drjohnson_event-api:1
+    build: .
+    ports:
+      # TODO: read from .env
+      - '5000:5000'
+    depends_on:
+      - database
+      - redis
+    environment:
+      # this should evaluate to the IP address of the redis / database container(s), on the docker private network
+      - REDIS_HOST=redis
+      - DATABASE_HOST=database
+
+      # TODO: how to read from .env variables in a docker-compose file?
+      - MYSQL_ROOT_PASSWORD=password
+
+    # these commands do indeed get executed ...
+    # command: "printf 'hello there!'"
+    # command: "cat ./database/mysql-schema.sql"
+
+    # command: ["./wait-for-it.sh", "db:3306", "--", "npm", "run", "db-mysql:seed", "&&", "npm", "start"]
+    # command: ["npm", "run", "db-mysql:seed", "&&", "npm", "start"]
+    # command: "mysql --user=root --password=password < ./database/mysql-schema.sql && node ./database/seed.js && exit 0"
+    # command: "mysql --user=root --password=password --protocol=TCP < ./database/mysql-schema.sql && node ./database/seed.js && exit 0"
+    command: "mysql --user=root --password=password < ./database/mysql-schema.sql"
+    # command: "mysql < ./database/mysql-schema.sql"
+
+    restart: always
   database:
     image: mysql
-    environment:
-      # TODO: change this
-      MYSQL_ROOT_PASSWORD: password
     command: --default-authentication-plugin=mysql_native_password
-    networks:
-      - bridge
+    # restart: always
+    environment:
+      # TODO: read from .env
+      - MYSQL_ROOT_PASSWORD=password
+    expose:
+      # TODO: read from .env
+      - "3306"
   redis:
     image: redis:alpine
-    ports:
-      - "6379"
-    networks:
-      - bridge
+    # restart: always

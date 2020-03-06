@@ -1,0 +1,17 @@
+{
+  "database": {
+    "dbConfig": {
+      "host": "DATABASE_HOST",
+      "user": "DATABASE_USER",
+      "database": "DATABASE_NAME",
+      "port": "DATABASE_PORT",
+      "password": "MYSQL_ROOT_PASSWORD"
+    }
+  },
+  "cache": {
+    "redisConfig": {
+      "host": "REDIS_HOST",
+      "port": "REDIS_PORT"
+    }
+  }
+}
