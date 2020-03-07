@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.API_SERVER_PORT || 5000;
 
 const controller = require('./controller.js');
 

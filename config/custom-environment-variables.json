@@ -12,5 +12,11 @@
       "host": "REDIS_HOST",
       "port": "REDIS_PORT"
     }
+  },
+  "api": {
+    "server": {
+      "host": "API_SERVER_HOST",
+      "port": "API_SERVER_PORT"
+    }
   }
 }

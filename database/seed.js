@@ -12,12 +12,12 @@ const db = require('./index-mysql.js');
 const mysql = require('mysql');
 
 const NUMBERS = {
-  // EVENTS: 10000000, // target 10,000,000
-  // ORGS: 1000, // target 1,000
-  // PEOPLE: 1000, // target 1,000
-  EVENTS: 1000,
-  ORGS: 100,
-  PEOPLE: 100
+  EVENTS: 10000000, // target 10,000,000
+  ORGS: 1000, // target 1,000
+  PEOPLE: 1000, // target 1,000
+  // EVENTS: 1000,
+  // ORGS: 100,
+  // PEOPLE: 100
 };
 
 // TODO: make return values from util functions a consistent format ...

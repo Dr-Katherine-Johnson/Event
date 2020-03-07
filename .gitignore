@@ -23,3 +23,5 @@ newrelic.js
 newrelic_agent.log
 faker.js
 fakerbundle.js
+
+# TODO: loader.io verification token??

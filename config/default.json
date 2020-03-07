@@ -12,5 +12,16 @@
       "host": "localhost",
       "port": 6379
     }
+  },
+  "api": {
+    "server": {
+      "host": "localhost",
+      "port": 5000
+    }
+  },
+  "loadTesting": {
+    "newRelic": {
+      "licenseKey": "NEW_RELIC_LICENSE_KEY"
+    }
   }
 }
