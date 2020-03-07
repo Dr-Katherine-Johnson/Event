@@ -3,7 +3,6 @@ services:
   # TODO: work in progress
   event-api:
     image: bellcd/drjohnson_event-api:1
-    build: .
     ports:
       # TODO: read from .env
       - '5000:5000'
