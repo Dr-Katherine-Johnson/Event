@@ -14,6 +14,6 @@ RUN npm cache clean --force && npm install
 COPY . .
 
 # set application PORT and expose docker PORT
-EXPOSE 5000
+EXPOSE 80
 
 # CMD [ "npm", "start" ]

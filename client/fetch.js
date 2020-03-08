@@ -1,5 +1,6 @@
 // TODO automate CircleCI build and deployment to AWS
 
+// TODO: add .env package to read these from the .env file into the webpack bundle
 const eventAPI = 'http://localhost:5000/event/';
 const rsvpAPI = 'http://localhost:3001/rsvp/';
 

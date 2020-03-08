@@ -16,12 +16,13 @@
   "api": {
     "server": {
       "host": "localhost",
-      "port": 5000
+      "port": 80
     }
   },
   "loadTesting": {
     "newRelic": {
-      "licenseKey": "NEW_RELIC_LICENSE_KEY"
+      "licenseKey": "NEW_RELIC_LICENSE_KEY",
+      "isOn": true
     }
   }
 }

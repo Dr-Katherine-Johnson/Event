@@ -18,5 +18,9 @@
       "host": "API_SERVER_HOST",
       "port": "API_SERVER_PORT"
     }
-  }
+  },
+  "loadTesting": {
+    "newRelic": {
+      "isOn": "NEW_RELIC_IS_ON"
+    }
 }

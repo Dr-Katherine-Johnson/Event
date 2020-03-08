@@ -1,4 +1,4 @@
-require('newrelic');
+if (process.env.NEW_RELIC_IS_ON) { require('newrelic'); }
 
 const express = require('express');
 const path = require('path');
@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.API_SERVER_PORT || 5000;
+const PORT = process.env.API_SERVER_PORT || 80;
 
 const controller = require('./controller.js');
 
