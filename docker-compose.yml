@@ -2,7 +2,8 @@ version: '3'
 services:
   # TODO: work in progress
   event-api:
-    image: bellcd/drjohnson_event-api:1
+    image: bellcd/drjohnson_event-service
+    build: .
     ports:
       # TODO: read from .env
       - '80:80'
@@ -11,6 +12,13 @@ services:
     env_file: .env
     command: "npm start"
     restart: "no"
+    deploy:
+      mode: replicated
+      replicas: 3
   redis:
-    image: redis:alpine
+    image: redis
+    ulimits:
+      nofile:
+        soft: 15000
+        hard: 15000
     # restart: always

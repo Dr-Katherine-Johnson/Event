@@ -23,4 +23,5 @@
     "newRelic": {
       "isOn": "NEW_RELIC_IS_ON"
     }
+  }
 }

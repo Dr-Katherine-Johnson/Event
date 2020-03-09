@@ -25,3 +25,11 @@
 # see .env file
 
 # set up the routing mesh for the swarm
+
+
+# move the docker-compose.yml and .env files to the manager node for the swarm
+# scp -i ~/aws/Administrator-key-pair-useast1.pem ./docker-compose.yml ec2-user@EC2_INSTANCE_URL:~
+
+# scp -i ~/aws/Administrator-key-pair-useast1.pem ./.env ec2-user@EC2_INSTANCE_URL:~
+
+# initiate the stack from the manager node
